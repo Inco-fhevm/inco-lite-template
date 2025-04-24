@@ -22,7 +22,7 @@ const config: HardhatUserConfig = {
     hardhat: {}, // Local Hardhat network
     // Inco's local node, based on anvil, called https://github.com/Inco-fhevm/lightning-rod
     // Make sure to run `docker compose up` to start the local node and covalidator
-    lightningRod: {
+    anvil: {
       url: "http://localhost:8545",
       accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
       chainId:31337

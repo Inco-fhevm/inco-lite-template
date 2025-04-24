@@ -21,7 +21,14 @@ describe("ConfidentialToken Tests", function () {
   let reEncryptorForBobWallet: any;
 
   beforeEach(async function () {
-    incoConfig = Lightning.localNode(); // Connect to Inco's latest public testnet
+    const chainId = publicClient.chain.id;           // e.g. 84532 or 31337
+    console.log("Running on chain:", chainId);
+    if(chainId === 31337){
+      incoConfig = Lightning.localNode(); // Connect to Inco's latest public testnet
+    }else{
+      incoConfig = Lightning.latest('testnet', 84532); 
+    }
+
      reEncryptorForMainWallet = await incoConfig.getReencryptor(wallet);
      reEncryptorForAliceWallet = await incoConfig.getReencryptor(namedWallets.alice);
      reEncryptorForBobWallet = await incoConfig.getReencryptor(namedWallets.bob);
