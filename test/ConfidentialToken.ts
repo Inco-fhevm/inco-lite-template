@@ -21,7 +21,7 @@ describe("ConfidentialToken Tests", function () {
   let reEncryptorForBobWallet: any;
 
   beforeEach(async function () {
-    incoConfig = Lightning.latest('testnet', 84532); // Connect to Inco's latest public testnet
+    incoConfig = Lightning.localNode(); // Connect to Inco's latest public testnet
      reEncryptorForMainWallet = await incoConfig.getReencryptor(wallet);
      reEncryptorForAliceWallet = await incoConfig.getReencryptor(namedWallets.alice);
      reEncryptorForBobWallet = await incoConfig.getReencryptor(namedWallets.bob);
@@ -140,7 +140,7 @@ describe("ConfidentialToken Tests", function () {
           functionName: "balanceOf",
           args: [wallet.account.address],
         })) as HexString;
-
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for the transfer to be processed 
       const decryptedBalanceForOwnerAfterTransfer = await reEncryptorForMainWallet({
         handle: eBalanceHandleForOwnerAfterTransfer.toString()
       });
@@ -161,6 +161,7 @@ describe("ConfidentialToken Tests", function () {
           functionName: "balanceOf",
           args: [namedWallets.alice.account.address],
         })) as HexString;
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for the transfer to be processed 
       const decryptedBalanceForAliceAfterTransfer = await reEncryptorForAliceWallet({
         handle: eBalanceHandleForAliceAfterTransfer.toString()
       });
@@ -197,7 +198,7 @@ describe("ConfidentialToken Tests", function () {
       })) as HexString;
 
       console.log("🔑 Reencrypting the balance handle...");
-
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for the transfer to be processed 
       const decryptedBalance = await reEncryptorForMainWallet({
         handle: eBalanceHandle.toString()
       });
@@ -230,7 +231,7 @@ describe("ConfidentialToken Tests", function () {
         functionName: "balanceOf",
         args: [wallet.account.address],
       })) as HexString;
-
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for the transfer to be processed 
       const decryptedBalanceForOwnerAfterMint = await reEncryptorForMainWallet({
         handle: eBalanceHandleForOwnerAfterMint.toString()
       });
@@ -282,7 +283,7 @@ describe("ConfidentialToken Tests", function () {
           functionName: "balanceOf",
           args: [wallet.account.address],
         })) as HexString;
-
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for the transfer to be processed 
       const decryptedBalanceForOwnerAfterTransfer = await reEncryptorForMainWallet({
         handle: eBalanceHandleForOwnerAfterTransfer.toString()
       });
@@ -303,7 +304,7 @@ describe("ConfidentialToken Tests", function () {
           functionName: "balanceOf",
           args: [namedWallets.alice.account.address],
         })) as HexString;
-
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for the transfer to be processed 
       const decryptedBalanceForAliceAfterTransfer = await reEncryptorForAliceWallet({
         handle: eBalanceHandleForAliceAfterTransfer.toString()
       });

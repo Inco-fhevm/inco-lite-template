@@ -1,6 +1,6 @@
 import { createWalletClient, createPublicClient, http } from "viem";
 import { privateKeyToAccount, mnemonicToAccount } from "viem/accounts";
-import { baseSepolia } from "viem/chains";
+import { anvil, anvil } from "viem/chains";
 import * as dotenv from "dotenv";
 import { HexString } from "@inco-fhevm/js/dist/binary";
 
@@ -20,15 +20,15 @@ const account = privateKeyToAccount(PRIVATE_KEY);
 
 // ✅ Create a Viem public client
 export const publicClient = createPublicClient({
-  chain: baseSepolia,
-  transport: http(process.env.BASE_SEPOLIA_RPC_URL || "https://sepolia.base.org"),
+  chain: anvil,
+  transport: http(process.env.BASE_SEPOLIA_RPC_URL || "http://localhost:8545"),
 });
 
 // ✅ Create a Viem wallet client (single wallet)
 export const wallet = createWalletClient({
   account,
-  chain: baseSepolia,
-  transport: http(process.env.BASE_SEPOLIA_RPC_URL || "https://sepolia.base.org"),
+  chain: anvil,
+  transport: http(process.env.BASE_SEPOLIA_RPC_URL || "http://localhost:8545"),
 });
 
 console.log(`✅ Wallet created: ${account.address}`);
@@ -43,28 +43,28 @@ if (!MNEMONIC) {
 export const  namedWallets = {
   alice: createWalletClient({
     account: mnemonicToAccount(MNEMONIC, { path: "m/44'/60'/0'/0/0" }),
-    chain: baseSepolia,
-    transport: http(process.env.BASE_SEPOLIA_RPC_URL || "https://sepolia.base.org"),
+    chain: anvil,
+    transport: http(process.env.BASE_SEPOLIA_RPC_URL || "http://localhost:8545"),
   }),
   bob: createWalletClient({
     account: mnemonicToAccount(MNEMONIC, { path: "m/44'/60'/0'/0/1" }),
-    chain: baseSepolia,
-    transport: http(process.env.BASE_SEPOLIA_RPC_URL || "https://sepolia.base.org"),
+    chain: anvil,
+    transport: http(process.env.BASE_SEPOLIA_RPC_URL || "http://localhost:8545"),
   }),
   dave: createWalletClient({
     account: mnemonicToAccount(MNEMONIC, { path: "m/44'/60'/0'/0/2" }),
-    chain: baseSepolia,
-    transport: http(process.env.BASE_SEPOLIA_RPC_URL || "https://sepolia.base.org"),
+    chain: anvil,
+    transport: http(process.env.BASE_SEPOLIA_RPC_URL || "http://localhost:8545"),
   }),
   carol: createWalletClient({
     account: mnemonicToAccount(MNEMONIC, { path: "m/44'/60'/0'/0/3" }),
-    chain: baseSepolia,
-    transport: http(process.env.BASE_SEPOLIA_RPC_URL || "https://sepolia.base.org"),
+    chain: anvil,
+    transport: http(process.env.BASE_SEPOLIA_RPC_URL || "http://localhost:8545"),
   }),
   john: createWalletClient({
     account: mnemonicToAccount(MNEMONIC, { path: "m/44'/60'/0'/0/4" }),
-    chain: baseSepolia,
-    transport: http(process.env.BASE_SEPOLIA_RPC_URL || "https://sepolia.base.org"),
+    chain: anvil,
+    transport: http(process.env.BASE_SEPOLIA_RPC_URL || "http://localhost:8545"),
   }),
 };
 

@@ -25,6 +25,7 @@ const config: HardhatUserConfig = {
     lightningRod: {
       url: "http://localhost:8545",
       accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
+      chainId:31337
     },
     baseSepolia: {
       url: BASE_SEPOLIA_RPC_URL,
