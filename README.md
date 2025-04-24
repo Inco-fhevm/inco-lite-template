@@ -27,13 +27,7 @@ docker compose up
 
 ### **3. Configure Environment Variables**  
 
-The current instructions work for a local node and a local covalidator. If that is your case, simply copy the environment variables prepared for you:
-
-```
-cp .env.local .env
-```
-
-If you want to test on another chain, e.g. Base Sepolia, fill in your own information in the `.env` file.
+Fill in your own information in the `.env` file, you can take this as example:
 
 ```plaintext
 # This should be a private key funded with native tokens.
