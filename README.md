@@ -36,9 +36,18 @@ cp .env.local .env
 If you want to test on another chain, e.g. Base Sepolia, fill in your own information in the `.env` file.
 
 ```plaintext
-PRIVATE_KEY=""  # Private key funded with native tokens
-SEED_PHRASE=""  # Seed phrase for testing with different accounts
-BASE_SEPOLIA_RPC_URL=""  # RPC URL supporting eth_getLogs and eth_getFilteredLogs
+# This should be a private key funded with native tokens.
+PRIVATE_KEY_ANVIL="0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+PRIVATE_KEY_BASE_SEPOLIA="f9723f7d66ea296d0b1fa6708a7120dd2f0f0e726ccbba6d5bb72ddf45517138"
+
+# This should be a seed phrase used to test functionalities with different accounts.  
+# You can send funds from the main wallet to this whenever needed.
+SEED_PHRASE="garden cage click scene crystal fat message twice rubber club choice cool"
+
+# This should be an RPC URL provided by a proper provider  
+# that supports the eth_getLogs() and eth_getFilteredLogs() methods.
+LOCAL_CHAIN_RPC_URL="http://localhost:8545"
+BASE_SEPOLIA_RPC_URL="https://base-sepolia-rpc.publicnode.com"
 ```
 
 ### **4. Compile Smart Contracts**
@@ -48,7 +57,7 @@ pnpm hardhat compile
 
 ### **5. Run Tests**
 ```sh
-pnpm hardhat test --network lightningRod
+pnpm hardhat test --network anvil
 ```
 
 Or, if running against another network, e.g. Base Sepolia, run
