@@ -37,7 +37,7 @@ If you want to test on another chain, e.g. Base Sepolia, fill in your own inform
 
 ```plaintext
 # This should be a private key funded with native tokens.
-PRIVATE_KEY_ANVIL=""
+PRIVATE_KEY_ANVIL="0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
 PRIVATE_KEY_BASE_SEPOLIA=""
 
 # This should be a seed phrase used to test functionalities with different accounts.  
