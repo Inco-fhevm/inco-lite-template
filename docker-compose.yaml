@@ -6,14 +6,14 @@ services:
   # Anvil node
   anvil:
     platform: linux/amd64 # mac compatibility
-    image: inconetwork/local-node-anvil:v3-33-gc708d2f # Match https://github.com/Inco-fhevm/lightning-rod/blob/main/.env
+    image: inconetwork/local-node-anvil:${DOCKER_IMAGE_TAG}
     ports:
       - "8545:8545"
 
   # Covalidator service that waits for deployer to be healthy
   covalidator:
     platform: linux/amd64 # mac compatibility
-    image: inconetwork/local-node-covalidator:v3-33-gc708d2f # https://github.com/Inco-fhevm/lightning-rod/blob/main/.env
+    image: inconetwork/local-node-covalidator:${DOCKER_IMAGE_TAG}
     depends_on:
       anvil:
         condition: service_healthy
