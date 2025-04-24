@@ -4,6 +4,8 @@ This repository provides a **complete Hardhat setup** for testing **reencryption
 
 ## **Setup Instructions**
 
+Below, we run a local node and a local covalidator (taken from [the Docker Compose file](./docker-compose.yaml)), and run Hardhat tests against it.
+
 ### **1. Clone the Repository**
 ```sh
 git clone <your-repo-url>
@@ -15,8 +17,23 @@ cd into_your_repo
 pnpm install
 ```
 
+### **3. Run a local node**
+
+The current instructions will run a local node and a local covalidator. If you are using this template against another network, e.g. Base Sepolia, skip this step.
+
+```sh
+docker compose up
+```
+
 ### **3. Configure Environment Variables**  
-Create a `.env` file in the root directory and add the following:  
+
+The current instructions work for a local node and a local covalidator. If that is your case, simply copy the environment variables prepared for you:
+
+```
+cp .env.local .env
+```
+
+If you want to test on another chain, e.g. Base Sepolia, fill in your own information in the `.env` file.
 
 ```plaintext
 PRIVATE_KEY=""  # Private key funded with native tokens
@@ -30,6 +47,12 @@ pnpm hardhat compile
 ```
 
 ### **5. Run Tests**
+```sh
+pnpm hardhat test --network lightningRod
+```
+
+Or, if running against another network, e.g. Base Sepolia, run
+
 ```sh
 pnpm hardhat test --network baseSepolia
 ```
