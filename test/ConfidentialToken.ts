@@ -89,6 +89,8 @@ describe("ConfidentialToken Tests", function () {
         args: [wallet.account.address],
       })) as HexString;
 
+      // Wait for covalidator to do the computation
+      await new Promise(resolve => setTimeout(resolve, 1000));
       const decryptedBalanceForOwnerAfterMint =  await reEncryptorForMainWallet({ handle: eBalanceHandleForOwnerAfterMint.toString() });
 
       console.log(
