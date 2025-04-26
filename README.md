@@ -25,7 +25,7 @@ The current instructions will run a local node and a local covalidator. If you a
 docker compose up
 ```
 
-### **3. Configure Environment Variables**  
+### **4. Configure Environment Variables**  
 
 Fill in your own information in the `.env` file, you can take this as example:
 
@@ -44,12 +44,12 @@ LOCAL_CHAIN_RPC_URL="http://localhost:8545"
 BASE_SEPOLIA_RPC_URL="https://base-sepolia-rpc.publicnode.com"
 ```
 
-### **4. Compile Smart Contracts**
+### **5. Compile Smart Contracts**
 ```sh
 pnpm hardhat compile
 ```
 
-### **5. Run Tests**
+### **6. Run Tests**
 ```sh
 pnpm hardhat test --network anvil
 ```
