@@ -25,8 +25,8 @@ importers:
         version: 16.5.0
     devDependencies:
       '@inco/js':
-        specifier: ^0.1.39
-        version: 0.1.39(typescript@5.0.4)(zod@3.25.42)
+        specifier: ^0.1.41
+        version: 0.1.41(typescript@5.0.4)(zod@3.25.42)
       '@nomicfoundation/hardhat-ignition':
         specifier: ^0.15.0
         version: 0.15.11(@nomicfoundation/hardhat-verify@2.0.14(hardhat@2.24.1(ts-node@10.9.2(@types/node@22.15.27)(typescript@5.0.4))(typescript@5.0.4)))(hardhat@2.24.1(ts-node@10.9.2(@types/node@22.15.27)(typescript@5.0.4))(typescript@5.0.4))
@@ -426,8 +426,8 @@ packages:
     engines: {node: '>=6'}
     hasBin: true
 
-  '@inco/js@0.1.39':
-    resolution: {integrity: sha512-TQm2sUD9F4iwh0yqisY5lIMKHD+vYN0GEfJjRQftD6ZsXmGGngNGWo/5trU4I4LVIfPYfqK3hF18R4tr9NAZ/w==}
+  '@inco/js@0.1.41':
+    resolution: {integrity: sha512-FYGsJW9to9XsdMLTw8K0Wr+ZCiSe0JFJVp1+u7mfKCFqz5zxffj2YMHDUvVuCET/KVoxkBQBhGszes/2v3R+FQ==}
 
   '@inco/lightning@0.1.32':
     resolution: {integrity: sha512-HJlfmg2ZsjKlso5PiDen2kLjuE9wSpyG/EYNnSNg1WKHfRPCC/xwO785GwRtRtQNsoF05cx8bOuomOHUX0DYIw==}
@@ -3173,7 +3173,7 @@ snapshots:
       protobufjs: 7.5.3
       yargs: 17.7.2
 
-  '@inco/js@0.1.39(typescript@5.0.4)(zod@3.25.42)':
+  '@inco/js@0.1.41(typescript@5.0.4)(zod@3.25.42)':
     dependencies:
       '@bufbuild/protobuf': 2.5.1
       '@connectrpc/connect': 2.0.2(@bufbuild/protobuf@2.5.1)
