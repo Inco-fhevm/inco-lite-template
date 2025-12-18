@@ -9,7 +9,7 @@ import {
   parseAbiItem,
 } from "viem";
 import contractAbi from "../artifacts/contracts/ConfidentialERC20.sol/ConfidentialERC20.json";
-import { HexString } from "@inco/js/dist/binary";
+import { HexString } from "@inco/js";
 // @ts-ignore
 import { Lightning } from '@inco/js/lite';
 describe("ConfidentialToken Tests", function () {
@@ -26,7 +26,7 @@ describe("ConfidentialToken Tests", function () {
     if(chainId === 31337){
       incoConfig = Lightning.localNode(); // Connect to Inco's latest public testnet
     }else{
-      incoConfig = Lightning.latest('testnet', 84532); 
+      incoConfig = Lightning.latest('devnet', 84532); 
     }
 
      reEncryptorForMainWallet = await incoConfig.getReencryptor(wallet);
@@ -54,7 +54,7 @@ describe("ConfidentialToken Tests", function () {
 
     for (const [name, userWallet] of Object.entries(namedWallets)) {
       const balance = await publicClient.getBalance({
-        address: userWallet.account.address,
+        address: userWallet.account?.address as Address,
       });
       const balanceEth = Number(formatEther(balance));
 
@@ -62,12 +62,12 @@ describe("ConfidentialToken Tests", function () {
         const neededEth = 0.001 - balanceEth;
         console.log(`💰 Funding ${name} with ${neededEth.toFixed(6)} ETH...`);
         const tx = await wallet.sendTransaction({
-          to: userWallet.account.address,
+          to: userWallet.account?.address as Address,
           value: parseEther(neededEth.toFixed(6)),
         });
 
         await publicClient.waitForTransactionReceipt({ hash: tx });
-        console.log(`✅ ${name} funded: ${userWallet.account.address}`);
+        console.log(`✅ ${name} funded: ${userWallet.account?.address as Address}`);
       }
     }
   });
@@ -131,7 +131,7 @@ describe("ConfidentialToken Tests", function () {
         abi: [transferFunctionAbi],
         functionName: "transfer",
         args: [
-          namedWallets.alice.account.address,
+          namedWallets.alice.account?.address as Address,
           encryptedCipherText,
         ],
       });
@@ -166,7 +166,7 @@ describe("ConfidentialToken Tests", function () {
           address: getAddress(contractAddress),
           abi: contractAbi.abi,
           functionName: "balanceOf",
-          args: [namedWallets.alice.account.address],
+          args: [namedWallets.alice.account?.address as Address],
         })) as HexString;
         await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for the transfer to be processed 
       const decryptedBalanceForAliceAfterTransfer = await reEncryptorForAliceWallet({
@@ -274,7 +274,7 @@ describe("ConfidentialToken Tests", function () {
         abi: [transferFunctionAbi],
         functionName: "transfer",
         args: [
-          namedWallets.alice.account.address,
+          namedWallets.alice.account?.address as Address,
           encryptedCipherText,
         ],
       });
@@ -309,7 +309,7 @@ describe("ConfidentialToken Tests", function () {
           address: getAddress(contractAddress),
           abi: contractAbi.abi,
           functionName: "balanceOf",
-          args: [namedWallets.alice.account.address],
+          args: [namedWallets.alice.account?.address as Address],
         })) as HexString;
         await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for the transfer to be processed 
       const decryptedBalanceForAliceAfterTransfer = await reEncryptorForAliceWallet({
@@ -331,7 +331,7 @@ describe("ConfidentialToken Tests", function () {
         address: contractAddress,
         abi: contractAbi.abi,
         functionName: "requestUserBalanceDecryption",
-        args: [namedWallets.alice.account.address], // Passing Alice's address for decryption
+        args: [namedWallets.alice.account?.address as Address], // Passing Alice's address for decryption
       });
 
       await publicClient.waitForTransactionReceipt({
