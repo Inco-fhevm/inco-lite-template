@@ -9,9 +9,6 @@ import "@openzeppelin/contracts/access/Ownable2Step.sol";
 
 contract ConfidentialERC20 is Ownable2Step {
     // Errors
-    error InsufficientBalance();
-    error InsufficientAllowance();
-    error InvalidDecryptionAttestation();
     error InsufficientFees();
 
     // Events
@@ -43,38 +40,6 @@ contract ConfidentialERC20 is Ownable2Step {
     // Helper functions
     function _requireFee() internal view {
         if (msg.value < inco.getFee()) revert InsufficientFees();
-    }
-
-    // Helper function to verify if the balance is enough
-    function _verifyEnoughBalance(
-        address owner,
-        euint256 amount,
-        DecryptionAttestation memory att
-    ) internal returns (bool) {
-        if (
-            ebool.unwrap(e.ge(balances[owner], amount)) != att.handle ||
-            !asBool(att.value)
-        ) {
-            revert InsufficientBalance();
-        }
-        return true;
-    }
-
-    // Helper function to verify if the allowance is enough
-    function _verifyEnoughAllowance(
-        address owner,
-        address spender,
-        euint256 amount,
-        DecryptionAttestation memory att
-    ) internal returns (bool) {
-        if (
-            ebool.unwrap(e.ge(allowances[owner][spender], amount)) !=
-            att.handle ||
-            !asBool(att.value)
-        ) {
-            revert InsufficientAllowance();
-        }
-        return true;
     }
 
     // Mint function to create tokens and add to the owner's balance
@@ -113,16 +78,12 @@ contract ConfidentialERC20 is Ownable2Step {
     // Transfer function for EOAs using encrypted inputs
     function transfer(
         address to,
-        bytes calldata encryptedAmount,
-        DecryptionAttestation memory enoughBalanceAttestation,
-        bytes[] memory enoughBalanceSignature
+        bytes calldata encryptedAmount
     ) public payable virtual returns (bool) {
         _requireFee();
         transfer(
             to,
-            e.newEuint256(encryptedAmount, msg.sender),
-            enoughBalanceAttestation,
-            enoughBalanceSignature
+            e.newEuint256(encryptedAmount, msg.sender)
         );
         return true;
     }
@@ -130,30 +91,12 @@ contract ConfidentialERC20 is Ownable2Step {
     // Transfer function for contracts
     function transfer(
         address to,
-        euint256 amount,
-        DecryptionAttestation memory enoughBalanceAttestation,
-        bytes[] memory enoughBalanceSignature
+        euint256 amount
     ) public virtual returns (bool) {
         e.allow(amount, address(this));
-        require(
-            inco.incoVerifier().isValidDecryptionAttestation(
-                enoughBalanceAttestation,
-                enoughBalanceSignature
-            ),
-            InvalidDecryptionAttestation()
-        );
+        ebool canTransfer = e.ge(balances[msg.sender], amount);
 
-        require(
-            ebool.unwrap(e.ge(balanceOf(msg.sender), amount)) ==
-                enoughBalanceAttestation.handle,
-            InsufficientBalance()
-        );
-        require(
-            asBool(enoughBalanceAttestation.value) == true,
-            InsufficientBalance()
-        );
-
-        _transfer(msg.sender, to, amount);
+        _transfer(msg.sender, to, amount, canTransfer);
         return true;
     }
 
@@ -219,20 +162,13 @@ contract ConfidentialERC20 is Ownable2Step {
     function transferFrom(
         address from,
         address to,
-        bytes calldata encryptedAmount,
-        DecryptionAttestation memory enoughBalanceAttestation,
-        DecryptionAttestation memory enoughAllowanceAttestation,
-        bytes[] memory enoughBalanceSignature,
-        bytes[] memory enoughAllowanceSignature
-    ) public virtual returns (bool) {
+        bytes calldata encryptedAmount
+    ) public payable virtual returns (bool) {
+        _requireFee();
         transferFrom(
             from,
             to,
-            e.newEuint256(encryptedAmount, msg.sender),
-            enoughBalanceAttestation,
-            enoughAllowanceAttestation,
-            enoughBalanceSignature,
-            enoughAllowanceSignature
+            e.newEuint256(encryptedAmount, msg.sender)
         );
         return true;
     }
@@ -241,73 +177,67 @@ contract ConfidentialERC20 is Ownable2Step {
     function transferFrom(
         address from,
         address to,
-        euint256 amount,
-        DecryptionAttestation memory enoughBalanceAttestation,
-        DecryptionAttestation memory enoughAllowanceAttestation,
-        bytes[] memory enoughBalanceSignature,
-        bytes[] memory enoughAllowanceSignature
+        euint256 amount
     ) public virtual returns (bool) {
         e.allow(amount, address(this));
 
-        require(
-            inco.incoVerifier().isValidDecryptionAttestation(
-                enoughBalanceAttestation,
-                enoughBalanceSignature
-            ),
-            InvalidDecryptionAttestation()
-        );
-
-        require(
-            inco.incoVerifier().isValidDecryptionAttestation(
-                enoughAllowanceAttestation,
-                enoughAllowanceSignature
-            ),
-            InvalidDecryptionAttestation()
-        );
-
-        require(
-            ebool.unwrap(e.ge(balanceOf(from), amount)) ==
-                enoughBalanceAttestation.handle,
-            InsufficientBalance()
-        );
-        require(
-            asBool(enoughBalanceAttestation.value) == true,
-            InsufficientBalance()
-        );
-
-        require(
-            ebool.unwrap(e.ge(_allowance(from, msg.sender), amount)) ==
-                enoughAllowanceAttestation.handle,
-            InsufficientAllowance()
-        );
-        require(
-            asBool(enoughAllowanceAttestation.value) == true,
-            InsufficientAllowance()
-        );
-
-        _approve(from, msg.sender, e.sub(_allowance(from, msg.sender), amount));
-        _transfer(from, to, amount);
+        ebool isTransferable = _updateAllowance(from, msg.sender, amount);
+        _transfer(from, to, amount, isTransferable);
         return true;
+    }
+
+    function _updateAllowance(
+        address owner,
+        address spender,
+        euint256 amount
+    ) internal virtual returns (ebool) {
+        euint256 currentAllowance = _allowance(owner, spender);
+        ebool allowedTransfer = e.ge(currentAllowance, amount);
+        ebool canTransfer = e.ge(balances[owner], amount);
+        ebool isTransferable = e.select(
+            canTransfer,
+            allowedTransfer,
+            e.asEbool(false)
+        );
+        _approve(
+            owner,
+            spender,
+            e.select(
+                isTransferable,
+                e.sub(currentAllowance, amount),
+                currentAllowance
+            )
+        );
+        return isTransferable;
     }
 
     // Internal transfer function for encrypted token transfer
     function _transfer(
         address from,
         address to,
-        euint256 amount
+        euint256 amount,
+        ebool isTransferable
     ) internal virtual {
-        euint256 newBalanceTo = e.add(balances[to], amount);
-        balances[to] = newBalanceTo;
-        e.allow(newBalanceTo, address(this));
-        e.allow(newBalanceTo, to);
+        euint256 transferValue = e.select(
+            isTransferable,
+            amount,
+            e.asEuint256(0)
+        );
 
-        euint256 newBalanceFrom = e.sub(balances[from], amount);
-        balances[from] = newBalanceFrom;
-        e.allow(newBalanceFrom, address(this));
-        e.allow(newBalanceFrom, from);
+        if(euint256.unwrap(balances[to]) == bytes32(0)) {
+            balances[to] = transferValue;
+        } else {
+            balances[to] = e.add(balances[to], transferValue);
+        }
 
-        emit Transfer(from, to, amount);
+        e.allow(balances[to], address(this));
+        e.allow(balances[to], to);
+
+        balances[from] = e.sub(balances[from], transferValue);
+        e.allow(balances[from], address(this));
+        e.allow(balances[from], from);
+
+        emit Transfer(from, to, transferValue);
     }
-
     
 }
