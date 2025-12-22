@@ -3,8 +3,6 @@
 pragma solidity ^0.8.28;
 
 import {inco, e, ebool, euint256} from "@inco/lightning/src/Lib.devnet.sol";
-import {asBool} from "@inco/lightning/src/shared/TypeUtils.sol";
-import {DecryptionAttestation} from "@inco/lightning/src/lightning-parts/DecryptionAttester.types.sol";
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
 
 contract ConfidentialERC20 is Ownable2Step {
