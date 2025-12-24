@@ -1,19 +1,26 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.28;
 
-import "@inco/lightning/src/Lib.sol";
+import {inco, e, ebool, euint256} from "@inco/lightning/src/Lib.devnet.sol";
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
 
 contract ConfidentialERC20 is Ownable2Step {
-    
-    // Events for Transfer, Approval, Mint, and Decryption
-    event Transfer(address indexed from, address indexed to);
-    event Approval(address indexed owner, address indexed spender);
-    event Mint(address indexed to, uint256 amount);
-    event UserBalanceDecrypted(address indexed user, uint256 decryptedAmount);
+    // Errors
+    error InsufficientFees();
 
-    uint256 public _totalSupply;
+    // Events
+    event Transfer(address indexed from, address indexed to, euint256 amount);
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        euint256 amount
+    );
+    event Mint(address indexed to, uint256 amount);
+    event EncryptedMint(address indexed to, euint256 amount);
+
+    // State variables
+    euint256 public totalSupply;
     string public _name;
     string public _symbol;
     uint8 public constant decimals = 18;
@@ -21,7 +28,6 @@ contract ConfidentialERC20 is Ownable2Step {
     // Mappings for balances and allowances
     mapping(address => euint256) internal balances;
     mapping(address => mapping(address => euint256)) internal allowances;
-    mapping(uint256 => address) internal requestIdToUserAddress;
 
     // Constructor to set the token name, symbol, and owner
     constructor() Ownable(msg.sender) {
@@ -29,37 +35,54 @@ contract ConfidentialERC20 is Ownable2Step {
         _symbol = "cUSD";
     }
 
-    // Mint function to create tokens and add to the owner's balance
-    function mint(uint256 mintedAmount) public virtual onlyOwner {
-        balances[owner()] = e.add(
-            balances[owner()],
-            e.asEuint256(mintedAmount)
-        );
-        e.allow(balances[owner()], address(this));
-        e.allow(balances[owner()], owner());
-        _totalSupply += mintedAmount;
-        emit Mint(owner(), mintedAmount);
+    // Helper functions
+    function _requireFee() internal view {
+        if (msg.value < inco.getFee()) revert InsufficientFees();
     }
 
-    // Overloaded _mint function to allow encrypted token minting
-    function _mint(
+    // Mint function to create tokens and add to the owner's balance
+    function mint(uint256 mintAmount) public virtual onlyOwner {
+        euint256 amount = e.asEuint256(mintAmount);
+        balances[owner()] = e.add(balances[owner()], amount);
+        e.allow(balances[owner()], address(this));
+        e.allow(balances[owner()], owner());
+        
+        totalSupply = e.add(totalSupply, amount);
+        e.reveal(totalSupply);
+        emit Mint(owner(), mintAmount);
+    }
+
+    // Encrypted mint function to create tokens and add to the sender's balance
+    function encryptedMint(
         bytes calldata encryptedAmount
-    ) public virtual /*onlyOwner*/ {
-        balances[msg.sender] = e.add(
-            balances[msg.sender],
-            e.newEuint256(encryptedAmount, msg.sender)
-        );
+    ) public payable virtual /*onlyOwner*/ {
+        _requireFee();
+        euint256 amount = e.newEuint256(encryptedAmount, msg.sender);
+        e.allow(amount, address(this));
+        if(euint256.unwrap(balances[msg.sender]) == bytes32(0)) {
+            balances[msg.sender] = amount;
+        } else {
+            balances[msg.sender] = e.add(balances[msg.sender], amount);
+        }
         e.allow(balances[msg.sender], address(this));
         e.allow(balances[msg.sender], owner());
         e.allow(balances[msg.sender], msg.sender);
+
+        totalSupply = e.add(totalSupply, amount);
+        e.reveal(totalSupply);
+        emit EncryptedMint(msg.sender, amount);
     }
 
     // Transfer function for EOAs using encrypted inputs
     function transfer(
         address to,
         bytes calldata encryptedAmount
-    ) public virtual returns (bool) {
-        transfer(to, e.newEuint256(encryptedAmount, msg.sender));
+    ) public payable virtual returns (bool) {
+        _requireFee();
+        transfer(
+            to,
+            e.newEuint256(encryptedAmount, msg.sender)
+        );
         return true;
     }
 
@@ -68,7 +91,9 @@ contract ConfidentialERC20 is Ownable2Step {
         address to,
         euint256 amount
     ) public virtual returns (bool) {
+        e.allow(amount, address(this));
         ebool canTransfer = e.ge(balances[msg.sender], amount);
+
         _transfer(msg.sender, to, amount, canTransfer);
         return true;
     }
@@ -78,11 +103,17 @@ contract ConfidentialERC20 is Ownable2Step {
         return balances[wallet];
     }
 
+    // Retrieves the total supply handle
+    function getTotalSupply() public view virtual returns (euint256) {
+        return totalSupply;
+    }
+
     // Approve function for EOAs with encrypted inputs
     function approve(
         address spender,
         bytes calldata encryptedAmount
-    ) public virtual returns (bool) {
+    ) public payable virtual returns (bool) {
+        _requireFee();
         approve(spender, e.newEuint256(encryptedAmount, msg.sender));
         return true;
     }
@@ -93,7 +124,7 @@ contract ConfidentialERC20 is Ownable2Step {
         euint256 amount
     ) public virtual returns (bool) {
         _approve(msg.sender, spender, amount);
-        emit Approval(msg.sender, spender);
+        emit Approval(msg.sender, spender, amount);
         return true;
     }
 
@@ -116,7 +147,7 @@ contract ConfidentialERC20 is Ownable2Step {
     ) public view virtual returns (euint256) {
         return _allowance(owner, spender);
     }
-    
+
     // Internal function to retrieve an allowance handle
     function _allowance(
         address owner,
@@ -130,8 +161,13 @@ contract ConfidentialERC20 is Ownable2Step {
         address from,
         address to,
         bytes calldata encryptedAmount
-    ) public virtual returns (bool) {
-        transferFrom(from, to, e.newEuint256(encryptedAmount, msg.sender));
+    ) public payable virtual returns (bool) {
+        _requireFee();
+        transferFrom(
+            from,
+            to,
+            e.newEuint256(encryptedAmount, msg.sender)
+        );
         return true;
     }
 
@@ -141,12 +177,13 @@ contract ConfidentialERC20 is Ownable2Step {
         address to,
         euint256 amount
     ) public virtual returns (bool) {
+        e.allow(amount, address(this));
+
         ebool isTransferable = _updateAllowance(from, msg.sender, amount);
         _transfer(from, to, amount, isTransferable);
         return true;
     }
 
-    // Internal function to update an allowance securely
     function _updateAllowance(
         address owner,
         address spender,
@@ -184,43 +221,21 @@ contract ConfidentialERC20 is Ownable2Step {
             amount,
             e.asEuint256(0)
         );
-        euint256 newBalanceTo = e.add(balances[to], transferValue);
-        balances[to] = newBalanceTo;
-        e.allow(newBalanceTo, address(this));
-        e.allow(newBalanceTo, to);
 
-        euint256 newBalanceFrom = e.sub(balances[from], transferValue);
-        balances[from] = newBalanceFrom;
-        e.allow(newBalanceFrom, address(this));
-        e.allow(newBalanceFrom, from);
+        if(euint256.unwrap(balances[to]) == bytes32(0)) {
+            balances[to] = transferValue;
+        } else {
+            balances[to] = e.add(balances[to], transferValue);
+        }
 
-        emit Transfer(from, to);
+        e.allow(balances[to], address(this));
+        e.allow(balances[to], to);
+
+        balances[from] = e.sub(balances[from], transferValue);
+        e.allow(balances[from], address(this));
+        e.allow(balances[from], from);
+
+        emit Transfer(from, to, transferValue);
     }
-
-    // Owner-only function to request decryption of a user's balance
-    function requestUserBalanceDecryption(
-        address user
-    ) public onlyOwner returns (uint256) {
-        euint256 encryptedBalance = balances[user];
-        e.allow(encryptedBalance, address(this));
-
-        uint256 requestId = e.requestDecryption(
-            encryptedBalance,
-            this.onDecryptionCallback.selector,
-            ""
-        );
-        requestIdToUserAddress[requestId] = user;
-        return requestId;
-    }
-
-    // Callback function to handle decrypted balance for a user
-    function onDecryptionCallback(
-        uint256 requestId,
-        bytes32 _decryptedAmount,
-        bytes memory data
-    ) public returns (bool) {
-        address userAddress = requestIdToUserAddress[requestId];
-        emit UserBalanceDecrypted(userAddress, uint256(_decryptedAmount));
-        return true;
-    }
+    
 }
