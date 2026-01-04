@@ -1,34 +1,26 @@
 import { expect } from "chai";
-import { namedWallets, wallet, publicClient } from "../utils/wallet";
+import { HexString, handleTypes } from "@inco/js";
 import {
   Address,
-  getContract,
   parseEther,
   formatEther,
-  getAddress,
-  parseAbiItem,
+  getAddress
 } from "viem";
-import contractAbi from "../artifacts/contracts/ConfidentialERC20.sol/ConfidentialERC20.json";
-import { HexString } from "@inco/js";
+import confidentialERC20Abi from "../artifacts/contracts/ConfidentialERC20.sol/ConfidentialERC20.json";
 import { encryptValue, decryptValue, getConfig, getFee } from "../utils/incoHelper";
-import { handleTypes } from '@inco/js';
+import { namedWallets, wallet, publicClient } from "../utils/wallet";
 
 describe("ConfidentialERC20 Tests", function () {
-  let confidentialToken: any;
   let contractAddress: Address;
-  let incoConfig: any;
+  let zap: any;
 
   beforeEach(async function () {
-    console.log("\n------ Setting up ConfidentialERC20 test environment ------");
-    
-    // Get Inco config
-    incoConfig = await getConfig();
-    console.log("✅ Inco config initialized");
+    console.log("\nSetting up ConfidentialERC20 test environment");
 
     // Deploy the contract
     const txHash = await wallet.deployContract({
-      abi: contractAbi.abi,
-      bytecode: contractAbi.bytecode as HexString,
+      abi: confidentialERC20Abi.abi,
+      bytecode: confidentialERC20Abi.bytecode as HexString,
       args: [],
     });
 
@@ -36,13 +28,7 @@ describe("ConfidentialERC20 Tests", function () {
       hash: txHash,
     });
     contractAddress = receipt.contractAddress as Address;
-    console.log(`✅ Contract deployed at: ${contractAddress}`);
-
-    confidentialToken = getContract({
-      address: contractAddress as HexString,
-      abi: contractAbi.abi,
-      client: wallet,
-    });
+    console.log(`Contract deployed at: ${contractAddress}`);
 
     // Fund test wallets if needed
     for (const [name, userWallet] of Object.entries(namedWallets)) {
@@ -60,61 +46,61 @@ describe("ConfidentialERC20 Tests", function () {
         });
 
         await publicClient.waitForTransactionReceipt({ hash: tx });
-        console.log(`✅ ${name} funded: ${userWallet.account?.address as Address}`);
+        console.log(`${name} funded: ${userWallet.account?.address as Address}`);
       }
     }
   });
 
-  describe("-------------------------------- Minting Tests --------------------------------", function () {
+  describe("----------- Minting Tests -----------", function () {
     it("Should mint tokens using plain mint() by owner", async function () {
-      console.log("\n------ 💰 Minting 5000 cUSD to Owner ------");
+      console.log("\nMinting 5000 cUSD to Owner");
       const plainTextAmount = parseEther("5000");
 
       const txHash = await wallet.writeContract({
         address: contractAddress,
-        abi: contractAbi.abi,
+        abi: confidentialERC20Abi.abi,
         functionName: "mint",
         args: [plainTextAmount],
       });
 
       await publicClient.waitForTransactionReceipt({ hash: txHash });
-      console.log("✅ Mint successful: 5000 cUSD added to Owner's balance");
+      console.log("Mint successful: 5000 cUSD added to Owner's balance");
 
       // Fetch owner's balance handle
-      console.log("\n------ 🔍 Fetching Balance Handle for Owner ------");
+      console.log("\nFetching Balance Handle for Owner");
       const eBalanceHandle = (await publicClient.readContract({
         address: getAddress(contractAddress),
-        abi: contractAbi.abi,
+        abi: confidentialERC20Abi.abi,
         functionName: "balanceOf",
         args: [wallet.account.address],
       })) as HexString;
 
-      // Wait for covalidator
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Wait for co-validator
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Decrypt balance
-      console.log("🔑 Decrypting balance...");
+      console.log("Decrypting balance...");
       const decryptedBalance = await decryptValue({
         walletClient: wallet,
         handle: eBalanceHandle.toString(),
       });
 
-      console.log(`🎯 Decrypted Owner Balance: ${formatEther(decryptedBalance)} cUSD`);
+      console.log(`Decrypted Owner Balance: ${formatEther(decryptedBalance)} cUSD`);
       expect(decryptedBalance).to.equal(plainTextAmount);
     });
 
     it("Should mint tokens using encryptedMint()", async function () {
-      console.log("\n------ 💰 Encrypted Minting 3000 cUSD to Alice ------");
+      console.log("\nEncrypted Minting 3000 cUSD to Alice");
       const plainTextAmount = parseEther("3000");
 
       // Encrypt the amount
-      const encryptedAmount = await incoConfig.encrypt(plainTextAmount, {
-        accountAddress: namedWallets.alice.account?.address as Address,
-        dappAddress: contractAddress,
-        handleType: handleTypes.euint256,
+      const encryptedAmount = await encryptValue({
+        value: plainTextAmount,
+        address: namedWallets.alice.account?.address as Address,
+        contractAddress,
       });
 
-      console.log("✅ Amount encrypted");
+      console.log("Amount encrypted");
 
       // Get fee amount
       const fee = await getFee();
@@ -122,7 +108,7 @@ describe("ConfidentialERC20 Tests", function () {
       // Mint with encrypted amount
       const txHash = await namedWallets.alice.writeContract({
         address: contractAddress,
-        abi: contractAbi.abi,
+        abi: confidentialERC20Abi.abi,
         functionName: "encryptedMint",
         args: [encryptedAmount],
         value: fee,
@@ -130,44 +116,33 @@ describe("ConfidentialERC20 Tests", function () {
         chain: namedWallets.alice.chain,
       });
 
-      await publicClient.waitForTransactionReceipt({ hash: txHash , confirmations: 5});
-      console.log("✅ Encrypted mint successful");
+      await publicClient.waitForTransactionReceipt({ hash: txHash, confirmations: 5 });
+      console.log("Encrypted mint successful");
 
-      // Covalidator can take 2 seconds on testnet
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Wait for co-validator
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Fetch Alice's balance
       const eBalanceHandle = (await publicClient.readContract({
         address: getAddress(contractAddress),
-        abi: contractAbi.abi,
+        abi: confidentialERC20Abi.abi,
         functionName: "balanceOf",
         args: [namedWallets.alice.account?.address as Address],
       })) as HexString;
 
-      console.log("balance handle after mint: ", eBalanceHandle);
+      console.log("Balance handle after mint:", eBalanceHandle);
 
       const decryptedBalance = await decryptValue({
         walletClient: namedWallets.alice,
         handle: eBalanceHandle.toString(),
       });
 
-      // fetch the total supply
-      const totalSupplyHandle = await publicClient.readContract({
-        address: getAddress(contractAddress),
-        abi: contractAbi.abi,
-        functionName: "totalSupply",
-      });
-
-      const decryptedTotalSupply = await incoConfig.attestedReveal(
-        [totalSupplyHandle as HexString]
-      );
-
-      console.log(`🎯 Decrypted Alice Balance: ${formatEther(decryptedBalance)} cUSD`);
+      console.log(`Decrypted Alice Balance: ${formatEther(decryptedBalance)} cUSD`);
       expect(decryptedBalance).to.equal(plainTextAmount);
     });
 
     it("Should revert encryptedMint() if insufficient fee provided", async function () {
-      console.log("\n------ ❌ Testing Insufficient Fee for Encrypted Mint ------");
+      console.log("\nTesting Insufficient Fee for Encrypted Mint");
       const plainTextAmount = parseEther("1000");
 
       const encryptedAmount = await encryptValue({
@@ -176,85 +151,80 @@ describe("ConfidentialERC20 Tests", function () {
         contractAddress,
       });
 
-      // Try to mint with insufficient fee (0 ETH)
       try {
         const txHash = await namedWallets.alice.writeContract({
           address: contractAddress,
-          abi: contractAbi.abi,
+          abi: confidentialERC20Abi.abi,
           functionName: "encryptedMint",
           args: [encryptedAmount],
-          value: 0n, // No fee provided
+          value: 0n,
           account: namedWallets.alice.account!,
           chain: namedWallets.alice.chain,
         });
         await publicClient.waitForTransactionReceipt({ hash: txHash });
         expect.fail("Should have reverted with InsufficientFees");
       } catch (error: any) {
-        console.log("✅ Transaction reverted as expected");
+        console.log("Transaction reverted as expected");
         expect(error.message).to.include("InsufficientFees");
       }
     });
   });
 
-  describe("-------------------------------- Transfer Tests --------------------------------", function () {
+  describe("------- Transfer Tests -------", function () {
     beforeEach(async function () {
       // Mint 5000 cUSD to owner for transfer tests
       const txHash = await wallet.writeContract({
         address: contractAddress,
-        abi: contractAbi.abi,
+        abi: confidentialERC20Abi.abi,
         functionName: "mint",
         args: [parseEther("5000")],
       });
       await publicClient.waitForTransactionReceipt({ hash: txHash });
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
     });
 
     it("Should transfer tokens from owner to Bob", async function () {
-      console.log("\n------ 📤 Transferring 1000 cUSD from Owner to Alice ------");
+      console.log("\nTransferring 1000 cUSD from Owner to Bob");
       const transferAmount = parseEther("1000");
 
-      // Encrypt the transfer amount
-      console.log("🔐 Encrypting transfer amount...");
+      console.log("Encrypting transfer amount...");
       const encryptedAmount = await encryptValue({
         value: transferAmount,
         address: wallet.account.address,
         contractAddress,
       });
 
-      // Get fee
       const fee = await getFee();
 
-      // Perform transfer
-      const transferFunctionAbi = contractAbi.abi.find(
-        (item) =>
+      // Filter ABI to only include the bytes version of transfer
+      const transferAbi = confidentialERC20Abi.abi.filter(
+        (item: any) =>
+          item.type === "function" &&
           item.name === "transfer" &&
-          item.inputs.length === 2 &&
-          item.inputs[1].type === "bytes"
+          item.stateMutability === "payable" &&
+          item.inputs?.[1]?.type === "bytes"
       );
-      if (!transferFunctionAbi) {
-        throw new Error("Could not find ABI for transfer(address,bytes)");
-      }
 
       const txHash = await wallet.writeContract({
         address: contractAddress,
-        abi: [transferFunctionAbi],
+        abi: transferAbi,
         functionName: "transfer",
         args: [
           namedWallets.bob.account?.address as Address,
-          encryptedAmount
+          encryptedAmount,
         ],
         value: fee,
       });
 
       await publicClient.waitForTransactionReceipt({ hash: txHash });
-      console.log("✅ Transfer successful");
+      console.log("Transfer successful");
 
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Verify owner's new balance (should be 4000)
       const ownerNewBalanceHandle = (await publicClient.readContract({
         address: getAddress(contractAddress),
-        abi: contractAbi.abi,
+        abi: confidentialERC20Abi.abi,
         functionName: "balanceOf",
         args: [wallet.account.address],
       })) as HexString;
@@ -264,12 +234,12 @@ describe("ConfidentialERC20 Tests", function () {
         handle: ownerNewBalanceHandle.toString(),
       });
 
-      console.log(`🎯 Owner Balance After Transfer: ${formatEther(ownerBalance)} cUSD`);
-      
-      // Verify Alice's balance (should be 1000)
+      console.log(`Owner Balance After Transfer: ${formatEther(ownerBalance)} cUSD`);
+
+      // Verify Bob's balance (should be 1000)
       const bobBalanceHandle = (await publicClient.readContract({
         address: getAddress(contractAddress),
-        abi: contractAbi.abi,
+        abi: confidentialERC20Abi.abi,
         functionName: "balanceOf",
         args: [namedWallets.bob.account?.address as Address],
       })) as HexString;
@@ -279,67 +249,62 @@ describe("ConfidentialERC20 Tests", function () {
         handle: bobBalanceHandle.toString(),
       });
 
-      console.log("bob balance: ", bobBalance);
-
-      console.log(`🎯 Bob Balance After Transfer: ${formatEther(bobBalance)} cUSD`);
+      console.log(`Bob Balance After Transfer: ${formatEther(bobBalance)} cUSD`);
       expect(ownerBalance).to.equal(parseEther("4000"));
       expect(bobBalance).to.equal(parseEther("1000"));
     });
-
   });
 
-  describe("-------------------------------- Approval and Allowance Tests --------------------------------", function () {
+  describe("------- Approval and Allowance Tests -------", function () {
     beforeEach(async function () {
-      // Mint 5000 cUSD to Alice for approval tests
+      // Mint 5000 cUSD to owner for approval tests
       const txHash = await wallet.writeContract({
         address: contractAddress,
-        abi: contractAbi.abi,
+        abi: confidentialERC20Abi.abi,
         functionName: "mint",
         args: [parseEther("5000")],
       });
       await publicClient.waitForTransactionReceipt({ hash: txHash });
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
     });
 
     it("Should approve spending allowance", async function () {
-      console.log("\n------ ✅ Approving Bob to spend 2000 cUSD ------");
+      console.log("\nApproving Bob to spend 2000 cUSD");
       const approvalAmount = parseEther("2000");
 
-      // Encrypt approval amount
       const encryptedAmount = await encryptValue({
         value: approvalAmount,
         address: wallet.account.address,
         contractAddress,
       });
 
-      // Get fee
       const fee = await getFee();
 
-      // Approve Bob
-      const approveFunctionAbi = contractAbi.abi.find(
-        (item) =>
+      // Filter ABI to only include the bytes version of approve
+      const approveAbi = confidentialERC20Abi.abi.filter(
+        (item: any) =>
+          item.type === "function" &&
           item.name === "approve" &&
-          item.inputs.length === 2 &&
-          item.inputs[1].type === "bytes"
+          item.stateMutability === "payable" &&
+          item.inputs?.[1]?.type === "bytes"
       );
 
       const txHash = await wallet.writeContract({
         address: contractAddress,
-        abi: [approveFunctionAbi],
+        abi: approveAbi,
         functionName: "approve",
         args: [namedWallets.bob.account?.address as Address, encryptedAmount],
         value: fee,
       });
 
       await publicClient.waitForTransactionReceipt({ hash: txHash });
-      console.log("✅ Approval successful");
+      console.log("Approval successful");
 
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      // Check allowance
       const allowanceHandle = (await publicClient.readContract({
         address: getAddress(contractAddress),
-        abi: contractAbi.abi,
+        abi: confidentialERC20Abi.abi,
         functionName: "allowance",
         args: [wallet.account.address, namedWallets.bob.account?.address as Address],
       })) as HexString;
@@ -349,22 +314,22 @@ describe("ConfidentialERC20 Tests", function () {
         handle: allowanceHandle.toString(),
       });
 
-      console.log(`🎯 Bob's Allowance: ${formatEther(allowanceValue)} cUSD`);
+      console.log(`Bob's Allowance: ${formatEther(allowanceValue)} cUSD`);
       expect(allowanceValue).to.equal(approvalAmount);
     });
   });
 
-  describe("-------------------------------- TransferFrom Tests --------------------------------", function () {
+  describe("------- TransferFrom Tests -------", function () {
     beforeEach(async function () {
       // Mint 5000 cUSD to owner
       const mintTx = await wallet.writeContract({
         address: contractAddress,
-        abi: contractAbi.abi,
+        abi: confidentialERC20Abi.abi,
         functionName: "mint",
         args: [parseEther("5000")],
       });
       await publicClient.waitForTransactionReceipt({ hash: mintTx });
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Approve Bob to spend 3000 cUSD
       const approvalAmount = parseEther("3000");
@@ -376,61 +341,59 @@ describe("ConfidentialERC20 Tests", function () {
 
       const fee = await getFee();
 
-      const approveFunctionAbi = contractAbi.abi.find(
-        (item) =>
+      // Filter ABI to only include the bytes version of approve
+      const approveAbi = confidentialERC20Abi.abi.filter(
+        (item: any) =>
+          item.type === "function" &&
           item.name === "approve" &&
-          item.inputs.length === 2 &&
-          item.inputs[1].type === "bytes"
+          item.stateMutability === "payable" &&
+          item.inputs?.[1]?.type === "bytes"
       );
 
       const approveTx = await wallet.writeContract({
         address: contractAddress,
-        abi: [approveFunctionAbi],
+        abi: approveAbi,
         functionName: "approve",
         args: [namedWallets.bob.account?.address as Address, encryptedAmount],
         value: fee,
       });
 
       await publicClient.waitForTransactionReceipt({ hash: approveTx });
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      console.log("✅ Bob approved to spend 3000 cUSD from owner");
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      console.log("Bob approved to spend 3000 cUSD from owner");
     });
 
     it("Should transferFrom owner to Alice using Bob's allowance", async function () {
-      console.log("\n------ 📤 Bob transferring 1500 cUSD from Owner to Alice ------");
+      console.log("\nBob transferring 1500 cUSD from Owner to Alice");
       const transferAmount = parseEther("1500");
 
-
-      // Encrypt transfer amount
       const encryptedAmount = await encryptValue({
         value: transferAmount,
         address: namedWallets.bob.account?.address as Address,
         contractAddress,
       });
 
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      console.log("✅ Attestations received");
-
-      // Get fee (transferFrom with encrypted input requires fee)
       const fee = await getFee();
 
-      // Perform transferFrom
-      const transferFromFunctionAbi = contractAbi.abi.find(
-        (item) =>
+      // Filter ABI to only include the bytes version of transferFrom
+      const transferFromAbi = confidentialERC20Abi.abi.filter(
+        (item: any) =>
+          item.type === "function" &&
           item.name === "transferFrom" &&
-          item.inputs.length === 3 &&
-          item.inputs[2].type === "bytes"
+          item.stateMutability === "payable" &&
+          item.inputs?.[2]?.type === "bytes"
       );
 
       const txHash = await namedWallets.bob.writeContract({
         address: contractAddress,
-        abi: [transferFromFunctionAbi],
+        abi: transferFromAbi,
         functionName: "transferFrom",
         args: [
           wallet.account.address,
           namedWallets.dave.account?.address as Address,
-          encryptedAmount
+          encryptedAmount,
         ],
         value: fee,
         account: namedWallets.bob.account!,
@@ -438,14 +401,14 @@ describe("ConfidentialERC20 Tests", function () {
       });
 
       await publicClient.waitForTransactionReceipt({ hash: txHash });
-      console.log("✅ TransferFrom successful");
+      console.log("TransferFrom successful");
 
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      // Verify owner's balance (should be 3500)
+      // Verify owner's new balance (should be 3500)
       const ownerNewBalanceHandle = (await publicClient.readContract({
         address: getAddress(contractAddress),
-        abi: contractAbi.abi,
+        abi: confidentialERC20Abi.abi,
         functionName: "balanceOf",
         args: [wallet.account.address],
       })) as HexString;
@@ -455,13 +418,13 @@ describe("ConfidentialERC20 Tests", function () {
         handle: ownerNewBalanceHandle.toString(),
       });
 
-      console.log(`🎯 Owner Balance: ${formatEther(ownerBalance)} cUSD`);
+      console.log(`Owner Balance: ${formatEther(ownerBalance)} cUSD`);
       expect(ownerBalance).to.equal(parseEther("3500"));
 
-      // Verify Dave's balance (should be 1500)
+      // Verify Dave's new balance (should be 1500)
       const daveBalanceHandle = (await publicClient.readContract({
         address: getAddress(contractAddress),
-        abi: contractAbi.abi,
+        abi: confidentialERC20Abi.abi,
         functionName: "balanceOf",
         args: [namedWallets.dave.account?.address as Address],
       })) as HexString;
@@ -471,29 +434,29 @@ describe("ConfidentialERC20 Tests", function () {
         handle: daveBalanceHandle.toString(),
       });
 
-      console.log(`🎯 Dave Balance: ${formatEther(daveBalance)} cUSD`);
+      console.log(`Dave Balance: ${formatEther(daveBalance)} cUSD`);
       expect(daveBalance).to.equal(parseEther("1500"));
 
       // Verify Bob's remaining allowance (should be 1500)
-      const newAllowanceHandle = (await publicClient.readContract({
+      const remainingAllowanceHandle = (await publicClient.readContract({
         address: getAddress(contractAddress),
-        abi: contractAbi.abi,
+        abi: confidentialERC20Abi.abi,
         functionName: "allowance",
         args: [wallet.account.address, namedWallets.bob.account?.address as Address],
       })) as HexString;
 
-      const newAllowance = await decryptValue({
+      const remainingAllowance = await decryptValue({
         walletClient: wallet,
-        handle: newAllowanceHandle.toString(),
+        handle: remainingAllowanceHandle.toString(),
       });
 
-      console.log(`🎯 Bob's Remaining Allowance: ${formatEther(newAllowance)} cUSD`);
-      expect(newAllowance).to.equal(parseEther("1500"));
+      console.log(`Bob's Remaining Allowance: ${formatEther(remainingAllowance)} cUSD`);
+      expect(remainingAllowance).to.equal(parseEther("1500"));
     });
 
     it("Should revert transferFrom with insufficient allowance", async function () {
-      console.log("\n------ ❌ Testing TransferFrom with Insufficient Allowance ------");
-      const transferAmount = parseEther("5000"); // More than allowance
+      console.log("\nTesting TransferFrom with Insufficient Allowance");
+      const transferAmount = parseEther("5000");
 
       const encryptedAmount = await encryptValue({
         value: transferAmount,
@@ -501,26 +464,28 @@ describe("ConfidentialERC20 Tests", function () {
         contractAddress,
       });
 
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       const fee = await getFee();
 
-      const transferFromFunctionAbi = contractAbi.abi.find(
-        (item) =>
+      // Filter ABI to only include the bytes version of transferFrom
+      const transferFromAbi = confidentialERC20Abi.abi.filter(
+        (item: any) =>
+          item.type === "function" &&
           item.name === "transferFrom" &&
-          item.inputs.length === 3 &&
-          item.inputs[2].type === "bytes"
+          item.stateMutability === "payable" &&
+          item.inputs?.[2]?.type === "bytes"
       );
 
       try {
         const txHash = await namedWallets.bob.writeContract({
           address: contractAddress,
-          abi: [transferFromFunctionAbi],
+          abi: transferFromAbi,
           functionName: "transferFrom",
           args: [
             wallet.account.address,
             namedWallets.dave.account?.address as Address,
-            encryptedAmount
+            encryptedAmount,
           ],
           value: fee,
           account: namedWallets.bob.account!,
@@ -529,10 +494,9 @@ describe("ConfidentialERC20 Tests", function () {
         await publicClient.waitForTransactionReceipt({ hash: txHash });
         expect.fail("Should have reverted with InsufficientAllowance");
       } catch (error: any) {
-        console.log("✅ Transaction reverted as expected");
+        console.log("Transaction reverted as expected");
         expect(error.message).to.include("InsufficientAllowance");
       }
     });
   });
-
 });
