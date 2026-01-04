@@ -11,7 +11,7 @@ dotenv.config();
 import { network } from "hardhat";
 const networkName = network.name;
 const USE_ANVIL = networkName === "anvil";
-console.log(`🌐 Detected Hardhat network: ${networkName}`);
+console.log(`Detected network: ${networkName}`);
 
 // Choose chain and RPC URL based on network
 const chain = USE_ANVIL ? anvil : baseSepolia;
@@ -84,7 +84,7 @@ export const namedWallets: Record<string, ReturnType<typeof createWalletClient>>
   }),
 };
 
-console.log("✅ Named wallets created:");
+console.log("Named wallets created:");
 Object.entries(namedWallets).forEach(([name, client]) => {
   console.log(`   - ${name}: ${client.account?.address as Address}`);
 });

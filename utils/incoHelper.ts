@@ -1,36 +1,32 @@
 import { AttestedComputeSupportedOps, Lightning } from '@inco/js/lite';
 import { handleTypes } from '@inco/js';
 import { publicClient } from './wallet';
-import type { WalletClient } from 'viem';
+import type { WalletClient, Hex } from 'viem';
 import { bytesToHex, pad, toHex } from 'viem';
 
-let incoConfig: any = null;
+let zap: any = null;
 
-/**
- * Get or initialize the Inco configuration based on the current chain
- */
+// Get or initialize the Inco configuration based on the current chain
 export async function getConfig() {
-  if (incoConfig) return incoConfig;
+  if (zap) return zap;
 
   const chainId = publicClient.chain.id;
-  console.log(`🔧 Initializing Inco config for chain: ${chainId}`);
+  console.log(`Initializing Inco config for chain: ${chainId}`);
 
   if (chainId === 31337) {
-    incoConfig = await Lightning.localNode(); // Local Anvil node
+    zap = await Lightning.localNode(); // Local Anvil node
   } else if (chainId === 84532) {
-    incoConfig = await Lightning.latest('devnet', 84532); // Base Sepolia
+    zap = await Lightning.latest('devnet', 84532); // Base Sepolia
   } 
   else {
     throw new Error(`Unsupported chain ID: ${chainId}`);
   }
 
-  return incoConfig;
+  return zap;
 
 }
 
-/**
- * Encrypt a value for a specific contract and account
- */
+// Encrypt a value for a specific contract and account
 export async function encryptValue({
   value,
   address,
@@ -39,23 +35,20 @@ export async function encryptValue({
   value: bigint;
   address: `0x${string}`;
   contractAddress: `0x${string}`;
-}): Promise<`0x${string}`> {
-  const inco = await getConfig();
+}): Promise<Hex> {
+  const zap = await getConfig();
 
-  const encryptedData = await inco.encrypt(value, {
+  const encryptedData = await zap.encrypt(value, {
     accountAddress: address,
     dappAddress: contractAddress,
     handleType: handleTypes.euint256,
   });
 
-  console.log("Encrypted data: ", encryptedData);
-
-  return encryptedData as `0x${string}`;
+  // Ensure it's treated as dynamic bytes, not bytes32
+  return encryptedData as Hex;
 }
 
-/**
- * Re-encrypt and decrypt a handle for a specific wallet
- */
+// Re-encrypt and decrypt a handle for a specific wallet
 export async function decryptValue({
   walletClient,
   handle,
@@ -63,10 +56,10 @@ export async function decryptValue({
   walletClient: WalletClient;
   handle: string;
 }): Promise<bigint> {
-  const inco = await getConfig();
+  const zap = await getConfig();
 
   // Get attested decrypt for the wallet
-  const attestedDecrypt = await inco.attestedDecrypt(
+  const attestedDecrypt = await zap.attestedDecrypt(
     walletClient,
     [handle],
   );
@@ -86,9 +79,9 @@ export const attestedCompute = async ({
   op: (typeof AttestedComputeSupportedOps)[keyof typeof AttestedComputeSupportedOps];
   rhsPlaintext: any;
 }) => {
-  const incoConfig = await getConfig();
+  const zap = await getConfig();
 
-  const result = await incoConfig.attestedCompute(
+  const result = await zap.attestedCompute(
     walletClient as WalletClient,
     lhsHandle as `0x${string}`,
     op,
@@ -99,13 +92,9 @@ export const attestedCompute = async ({
   const signatures = result.covalidatorSignatures.map((sig: Uint8Array) => bytesToHex(sig));
 
   // Encode the plaintext value as bytes32
-  // For boolean: true = 1, false = 0, padded to 32 bytes
   const encodedValue = pad(toHex(result.plaintext.value ? 1 : 0), { size: 32 });
 
-  // Return in format expected by contract:
-  // - plaintext: the actual decrypted value  
-  // - attestation: { handle, value } for the DecryptionAttestation struct
-  // - signature array for verification
+  // Return in format expected by contract
   return {
     plaintext: result.plaintext.value,
     attestation: {
@@ -116,15 +105,12 @@ export const attestedCompute = async ({
   };
 };
 
-/**
- * Get the fee required for Inco operations
- */
+// Get the fee required for Inco operations
 export async function getFee(): Promise<bigint> {
-  const inco = await getConfig();
+  const zap = await getConfig();
   
-  // Read the fee from the Lightning contract
   const fee = await publicClient.readContract({
-    address: inco.executorAddress,
+    address: zap.executorAddress,
     abi: [
       {
         type: 'function',
@@ -137,6 +123,5 @@ export async function getFee(): Promise<bigint> {
     functionName: 'getFee',
   });
 
-  console.log("Fee: ", fee);
   return fee;
 }
