@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { HexString, handleTypes } from "@inco/js";
+import { HexString } from "@inco/js";
 import {
   Address,
   parseEther,
@@ -7,12 +7,11 @@ import {
   getAddress
 } from "viem";
 import confidentialERC20Abi from "../artifacts/contracts/ConfidentialERC20.sol/ConfidentialERC20.json";
-import { encryptValue, decryptValue, getConfig, getFee } from "../utils/incoHelper";
+import { encryptValue, decryptValue, getFee } from "../utils/incoHelper";
 import { namedWallets, wallet, publicClient } from "../utils/wallet";
 
 describe("ConfidentialERC20 Tests", function () {
   let contractAddress: Address;
-  let zap: any;
 
   beforeEach(async function () {
     console.log("\nSetting up ConfidentialERC20 test environment");
