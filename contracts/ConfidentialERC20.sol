@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.30;
 
-import {inco, e, ebool, euint256} from "@inco/lightning/src/Lib.devnet.sol";
+import { e, ebool, euint256, inco } from "@inco/lightning/src/Lib.sol";
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
 
 contract ConfidentialERC20 is Ownable2Step {

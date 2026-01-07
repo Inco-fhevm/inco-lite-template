@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@inco/lightning':
-        specifier: v0.7.6-devnet
-        version: 0.7.6-devnet
+        specifier: ^0.7.6
+        version: 0.7.6
       '@nomicfoundation/hardhat-toolbox':
         specifier: ^5.0.0
         version: 5.0.0(4aad595c92f35adb4df24a052e42e64f)
@@ -25,8 +25,8 @@ importers:
         version: 16.6.1
     devDependencies:
       '@inco/js':
-        specifier: v0.7.6-devnet
-        version: 0.7.6-devnet(typescript@5.0.4)
+        specifier: ^0.7.6
+        version: 0.7.6(typescript@5.0.4)
       '@nomicfoundation/hardhat-ignition':
         specifier: ^0.15.0
         version: 0.15.16(@nomicfoundation/hardhat-verify@2.1.3(hardhat@2.28.2(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.0.4))(typescript@5.0.4)))(hardhat@2.28.2(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.0.4))(typescript@5.0.4))
@@ -395,11 +395,11 @@ packages:
     engines: {node: '>=6'}
     hasBin: true
 
-  '@inco/js@0.7.6-devnet':
-    resolution: {integrity: sha512-bNRjpzMZVBHf8Vn+YGnHqpSM/+cU8v3T5NujPiPDSVKUVg1N0IRAZpelzZ+KkEwoG++Oyms/HvP3ml1O1a8HTw==}
+  '@inco/js@0.7.6':
+    resolution: {integrity: sha512-TH8dZv/Q68h0lEh1dDPpGGdVld8yJQeKwdilpjVjKqkvysgu+CNZvDjnJQE0VGB1CWxjXpaaMfkXIdKHrx+/7A==}
 
-  '@inco/lightning@0.7.6-devnet':
-    resolution: {integrity: sha512-vCylZbF0D7nkJf4OefMtrLhXeHrDVIs9FVQUGWMlSC+RQSHo2kWSMD9OetX2BEViYEzEhokSVnSqsbUnbVSWZA==}
+  '@inco/lightning@0.7.6':
+    resolution: {integrity: sha512-6ZrjLmZf8zIhs9rNG7ZDmA7gviR0zUM5dJJEOkiPu2qPj8rUqE8fReG1SVVai3Rcdm8mvottVpWaqDcAG1zJwQ==}
 
   '@inco/shared@0.1.0':
     resolution: {integrity: sha512-Yw4KnTCGJPMGlWFq1JEpuadoNYFEXA+TObwNsR2Tq9ICgf0iVksSYatqiUeHaB1/J9Vyo5obZOKsU92Oieacog==}
@@ -1251,8 +1251,8 @@ packages:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
     engines: {node: '>= 0.4'}
 
-  ecies-geth@1.7.5:
-    resolution: {integrity: sha512-0T2OBjgyCUhG/Jgs4IiUax7KvgueSt9VuoH2IJtWwKjPOuz0fRiL1MMwECV82useHk9mfYHrEL6HEZnhS7K+0Q==}
+  ecies-geth@1.7.6:
+    resolution: {integrity: sha512-yGZM2bVBb3tDVUNcdgFco/iEGwVEiWhpszOoVHN3MjoPNS623JBxS9qbGV6Fs01yTuFDCmsGkS4/S2fL+QlBpA==}
 
   effect@3.19.14:
     resolution: {integrity: sha512-3vwdq0zlvQOxXzXNKRIPKTqZNMyGCdaFUBfMPqpsyzZDre67kgC1EEHDV4EoQTovJ4w5fmJW756f86kkuz7WFA==}
@@ -1426,9 +1426,9 @@ packages:
     resolution: {integrity: sha512-dKx12eRCVIzqCxFGplyFKJMPvLEWgmNtUrpTiJIR5u97zEhRG8ySrtboPHZXx7daLxQVrl643cTzbab2tkQjxg==}
     engines: {node: '>= 0.4'}
 
-  forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/26048ab55c64519ce21e032fdb49df1d5a2a7eb4:
-    resolution: {tarball: https://codeload.github.com/foundry-rs/forge-std/tar.gz/26048ab55c64519ce21e032fdb49df1d5a2a7eb4}
-    version: 1.12.0
+  forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/e3386f2f9cc5ebf16ec5370869d5a49cdb85a0cb:
+    resolution: {tarball: https://codeload.github.com/foundry-rs/forge-std/tar.gz/e3386f2f9cc5ebf16ec5370869d5a49cdb85a0cb}
+    version: 1.14.0
 
   form-data@2.5.5:
     resolution: {integrity: sha512-jqdObeR2rxZZbPSGL+3VckHMYtu+f9//KXBsVny6JSX/pa38Fy+bGjuG8eW/H6USNQWhLi8Num++cU2yOCNz4A==}
@@ -3000,7 +3000,7 @@ snapshots:
       protobufjs: 7.5.4
       yargs: 17.7.2
 
-  '@inco/js@0.7.6-devnet(typescript@5.0.4)':
+  '@inco/js@0.7.6(typescript@5.0.4)':
     dependencies:
       '@bufbuild/protobuf': 2.10.2
       '@connectrpc/connect': 2.1.1(@bufbuild/protobuf@2.10.2)
@@ -3008,7 +3008,7 @@ snapshots:
       '@connectrpc/connect-web': 2.1.1(@bufbuild/protobuf@2.10.2)(@connectrpc/connect@2.1.1(@bufbuild/protobuf@2.10.2))
       '@grpc/grpc-js': 1.14.3
       '@types/elliptic': 6.4.18
-      ecies-geth: 1.7.5
+      ecies-geth: 1.7.6
       effect: 3.19.14
       elliptic: 6.6.1
       sha3: 2.1.4
@@ -3019,21 +3019,21 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@inco/lightning@0.7.6-devnet':
+  '@inco/lightning@0.7.6':
     dependencies:
       '@inco/shared': 0.1.0
       '@openzeppelin/contracts': 5.4.0
       '@openzeppelin/contracts-upgradeable': 5.4.0(@openzeppelin/contracts@5.4.0)
       '@safe-global/safe-smart-account': git+https://git@github.com:safe-global/safe-smart-account.git#dc437e8fba8b4805d76bcbd1c668c9fd3d1e83be
       ds-test: https://codeload.github.com/dapphub/ds-test/tar.gz/e282159d5170298eb2455a6c05280ab5a73a4ef0
-      forge-std: https://codeload.github.com/foundry-rs/forge-std/tar.gz/26048ab55c64519ce21e032fdb49df1d5a2a7eb4
+      forge-std: https://codeload.github.com/foundry-rs/forge-std/tar.gz/e3386f2f9cc5ebf16ec5370869d5a49cdb85a0cb
       tsx: 4.21.0
 
   '@inco/shared@0.1.0':
     dependencies:
       '@openzeppelin/contracts': 5.4.0
       ds-test: https://codeload.github.com/dapphub/ds-test/tar.gz/e282159d5170298eb2455a6c05280ab5a73a4ef0
-      forge-std: https://codeload.github.com/foundry-rs/forge-std/tar.gz/26048ab55c64519ce21e032fdb49df1d5a2a7eb4
+      forge-std: https://codeload.github.com/foundry-rs/forge-std/tar.gz/e3386f2f9cc5ebf16ec5370869d5a49cdb85a0cb
 
   '@isaacs/balanced-match@4.0.1': {}
 
@@ -3913,7 +3913,7 @@ snapshots:
       es-errors: 1.3.0
       gopd: 1.2.0
 
-  ecies-geth@1.7.5:
+  ecies-geth@1.7.6:
     dependencies:
       elliptic: 6.6.1
       secp256k1: 5.0.1
@@ -4183,7 +4183,7 @@ snapshots:
     dependencies:
       is-callable: 1.2.7
 
-  forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/26048ab55c64519ce21e032fdb49df1d5a2a7eb4: {}
+  forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/e3386f2f9cc5ebf16ec5370869d5a49cdb85a0cb: {}
 
   form-data@2.5.5:
     dependencies:

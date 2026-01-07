@@ -16,7 +16,7 @@ export async function getConfig() {
   if (chainId === 31337) {
     zap = await Lightning.localNode(); // Local Anvil node
   } else if (chainId === 84532) {
-    zap = await Lightning.latest('devnet', 84532); // Base Sepolia
+    zap = await Lightning.latest('testnet', 84532); // Base Sepolia
   } 
   else {
     throw new Error(`Unsupported chain ID: ${chainId}`);

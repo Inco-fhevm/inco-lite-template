@@ -2,8 +2,7 @@ import { createWalletClient, createPublicClient, http , type Address} from "viem
 import { privateKeyToAccount, mnemonicToAccount } from "viem/accounts";
 import { baseSepolia, anvil } from "viem/chains";
 import * as dotenv from "dotenv";
-// @ts-ignore
-import { HexString } from "@inco-fhevm/js/dist/binary";
+import { HexString } from "@inco/js";
 
 dotenv.config();
 
