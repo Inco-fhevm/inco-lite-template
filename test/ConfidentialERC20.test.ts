@@ -38,7 +38,7 @@ describe("ConfidentialERC20 Tests", function () {
 
       if (balanceEth < 0.01) {
         const neededEth = 0.01 - balanceEth;
-        console.log(`💰 Funding ${name} with ${neededEth.toFixed(6)} ETH...`);
+        console.log(`Funding ${name} with ${neededEth.toFixed(6)} ETH...`);
         const tx = await wallet.sendTransaction({
           to: userWallet.account?.address as Address,
           value: parseEther(neededEth.toFixed(6)),
@@ -78,7 +78,6 @@ describe("ConfidentialERC20 Tests", function () {
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Decrypt balance
-      console.log("Decrypting balance...");
       const decryptedBalance = await decryptValue({
         walletClient: wallet,
         handle: eBalanceHandle.toString(),
@@ -99,7 +98,6 @@ describe("ConfidentialERC20 Tests", function () {
         contractAddress,
       });
 
-      console.log("Amount encrypted");
 
       // Get fee amount
       const fee = await getFee();
@@ -186,7 +184,6 @@ describe("ConfidentialERC20 Tests", function () {
       console.log("\nTransferring 1000 cUSD from Owner to Bob");
       const transferAmount = parseEther("1000");
 
-      console.log("Encrypting transfer amount...");
       const encryptedAmount = await encryptValue({
         value: transferAmount,
         address: wallet.account.address,
