@@ -1,6 +1,6 @@
 {
 	"devDependencies": {
-		"@inco/js": "^0.7.6",
+		"@inco/js": "^0.7.7",
 		"@nomicfoundation/hardhat-ignition": "^0.15.0",
 		"@nomicfoundation/hardhat-ignition-viem": "^0.15.0",
 		"@nomicfoundation/hardhat-network-helpers": "^1.0.0",
@@ -20,7 +20,7 @@
 		"viem": "^2.43.5"
 	},
 	"dependencies": {
-		"@inco/lightning": "^0.7.6",
+		"@inco/lightning": "^0.7.7",
 		"@nomicfoundation/hardhat-toolbox": "^5.0.0",
 		"@openzeppelin/contracts": "^5.4.0",
 		"@openzeppelin/contracts-upgradeable": "^5.4.0",
