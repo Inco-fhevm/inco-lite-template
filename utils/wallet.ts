@@ -2,7 +2,7 @@ import { createWalletClient, createPublicClient, http , type Address} from "viem
 import { privateKeyToAccount, mnemonicToAccount } from "viem/accounts";
 import { baseSepolia, anvil } from "viem/chains";
 import * as dotenv from "dotenv";
-import { HexString } from "@inco/js";
+import { HexString } from "@inco/lightning-js";
 
 dotenv.config();
 

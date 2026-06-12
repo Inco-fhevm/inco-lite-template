@@ -8,7 +8,7 @@
 		"test:local": "NETWORK=anvil bun test --timeout 300000"
 	},
 	"devDependencies": {
-		"@inco/js": "1.0.0-rc-8",
+		"@inco/lightning-js": "1.0.0-rc-11",
 		"@types/bun": "latest",
 		"@nomicfoundation/hardhat-ignition": "^0.15.0",
 		"@nomicfoundation/hardhat-ignition-viem": "^0.15.0",
@@ -29,7 +29,7 @@
 		"viem": "^2.43.5"
 	},
 	"dependencies": {
-		"@inco/lightning": "1.0.0-rc-8",
+		"@inco/lightning": "1.0.0-rc-11",
 		"@nomicfoundation/hardhat-toolbox": "^5.0.0",
 		"@openzeppelin/contracts": "^5.4.0",
 		"@openzeppelin/contracts-upgradeable": "^5.4.0",

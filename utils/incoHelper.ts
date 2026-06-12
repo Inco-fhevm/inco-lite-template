@@ -1,5 +1,5 @@
-import { AttestedComputeSupportedOps, Lightning } from '@inco/js/lite';
-import { handleTypes } from '@inco/js';
+import { AttestedComputeSupportedOps, Lightning } from '@inco/lightning-js/lite';
+import { handleTypes } from '@inco/lightning-js';
 import { publicClient } from './wallet.js';
 import type { WalletClient, Hex } from 'viem';
 import { bytesToHex, pad, toHex } from 'viem';

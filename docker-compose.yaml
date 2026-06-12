@@ -9,14 +9,14 @@ services:
   # Anvil node
   anvil:
     platform: linux/amd64 # mac compatibility
-    image: inconetwork/local-node-anvil-mainnet:v1.0.0-rc-8
+    image: inconetwork/local-node-anvil-mainnet:v1.0.0-rc-11
     ports:
       - "8545:8545"
 
   # Covalidator service that waits for deployer to be healthy
   covalidator:
     platform: linux/amd64 # mac compatibility
-    image: inconetwork/local-node-covalidator-mainnet:v1.0.0-rc-8
+    image: inconetwork/local-node-covalidator-mainnet:v1.0.0-rc-11
     depends_on:
       anvil:
         condition: service_healthy

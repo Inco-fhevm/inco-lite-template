@@ -1,5 +1,5 @@
 import { describe, it, beforeEach, expect } from "bun:test";
-import { HexString } from "@inco/js";
+import { HexString } from "@inco/lightning-js";
 import { Address, parseEther, formatEther, getAddress } from "viem";
 import confidentialERC20Abi from "../artifacts/contracts/ConfidentialERC20.sol/ConfidentialERC20.json";
 import { encryptValue, decryptValue, getFee } from "../utils/incoHelper";
