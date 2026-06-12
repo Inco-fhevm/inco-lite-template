@@ -14,8 +14,8 @@ importers:
   .:
     dependencies:
       '@inco/lightning':
-        specifier: 1.0.0-rc-11
-        version: 1.0.0-rc-11
+        specifier: 1.0.0-rc-12
+        version: 1.0.0-rc-12
       '@nomicfoundation/hardhat-toolbox':
         specifier: ^5.0.0
         version: 5.0.0(5d99e244ba9990a185fd320000abe280)
@@ -30,8 +30,8 @@ importers:
         version: 17.2.3
     devDependencies:
       '@inco/lightning-js':
-        specifier: 1.0.0-rc-11
-        version: 1.0.0-rc-11(typescript@5.9.3)
+        specifier: 1.0.0-rc-12
+        version: 1.0.0-rc-12(typescript@5.9.3)
       '@nomicfoundation/hardhat-ignition':
         specifier: ^0.15.0
         version: 0.15.16(@nomicfoundation/hardhat-verify@2.1.3(hardhat@2.28.2(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)))(hardhat@2.28.2(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3))
@@ -420,11 +420,11 @@ packages:
     resolution: {integrity: sha512-mNdGapyHPw9gEicUlBYlWGjOpWmQyC49dEqLm5QtGZOSjIVSjSTBX/Bq2VxXNTeNdsRYIpPOalTwYbop/+4Ykw==}
     engines: {node: '>=16.0.0'}
 
-  '@inco/lightning-js@1.0.0-rc-11':
-    resolution: {integrity: sha512-Q3tMuFO9rtBhCX7899DSo+oJsuC1LygpD6m/eHiViOxkwXY4ORBBWbtJRPcP7WBTy/5eFq4dgeHseTJ8NK0oMA==}
+  '@inco/lightning-js@1.0.0-rc-12':
+    resolution: {integrity: sha512-EMWdLhBQ+3hVYtEz+Zcdti6UjW6KoqlXNEfHkp7246gAD9AlHB1iIWgm8TEVL2qIDSOgABIR8PM3xn5oYN+KXA==}
 
-  '@inco/lightning@1.0.0-rc-11':
-    resolution: {integrity: sha512-8CRiIahqVQYemCx93qQdiy7UFzdmVur9rHe149meeEO7Eo01VGIUKvWA0294Sr30W8wvge11V5jgdgGgXEc7mA==}
+  '@inco/lightning@1.0.0-rc-12':
+    resolution: {integrity: sha512-rUybq6nzzuADo+AEE46AfheClgwpNbhltgk1t+b0yBZrQy2lW6UiS2FH0uBex5zmbx5EY98xGdduBrg+zl1qXw==}
 
   '@inco/shared@0.1.0':
     resolution: {integrity: sha512-Yw4KnTCGJPMGlWFq1JEpuadoNYFEXA+TObwNsR2Tq9ICgf0iVksSYatqiUeHaB1/J9Vyo5obZOKsU92Oieacog==}
@@ -3072,7 +3072,7 @@ snapshots:
       '@hpke/dhkem-x25519': 1.8.0
       mlkem: 2.7.0
 
-  '@inco/lightning-js@1.0.0-rc-11(typescript@5.9.3)':
+  '@inco/lightning-js@1.0.0-rc-12(typescript@5.9.3)':
     dependencies:
       '@bufbuild/protobuf': 2.10.0
       '@connectrpc/connect': 2.1.0(@bufbuild/protobuf@2.10.0)
@@ -3091,7 +3091,7 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@inco/lightning@1.0.0-rc-11':
+  '@inco/lightning@1.0.0-rc-12':
     dependencies:
       '@inco/shared': 0.1.0
       '@openzeppelin/contracts': 5.4.0

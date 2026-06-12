@@ -51,7 +51,7 @@ pnpm hardhat compile
 
 ### **5. Run Tests**
 
-The e2e tests run under **Bun** (ESM, loads `@inco/js`'s ESM build). Compile first, then run.
+The e2e tests run under **Bun** (ESM, loads `@inco/lightning-js`'s ESM build). Compile first, then run.
 
 **Base Sepolia (default — hosted covalidator, no docker):** needs a funded `PRIVATE_KEY_BASE_SEPOLIA`.
 
@@ -72,12 +72,8 @@ bun run test:local       # → local anvil (NETWORK=anvil)
 > timeout for the covalidator round-trips; the default 5s will time out. Decrypt waits adaptively
 > (retries until the covalidator processes the handle), so it's instant locally and patient on
 > Base Sepolia.
->
-> **Apple Silicon note (local only):** the local-node images are amd64-only and run under
-> emulation. Keep Docker Desktop's VM in a clean state — pick a VMM (QEMU or Apple Virtualization
-> framework) and fully **Apply & Restart** after any change.
 
 ## **Features**
 - End-to-end testing of encryption, reencryption  and decryption functionalities.
-- Hardhat for contracts; Bun + ESM for the encrypt/decrypt e2e (matching `@inco/js` v1).
+- Hardhat for contracts; Bun + ESM for the encrypt/decrypt e2e (matching `@inco/lightning-js` v1).
 - Supports reencryption and ciphertext validation.

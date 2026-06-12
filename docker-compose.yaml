@@ -1,22 +1,19 @@
 # Inco local node (anvil + covalidator) for the `mainnet` pepper (executor 0x4b9911…8624,
 # matching @inco/lightning/src/Lib.sol). Mirrors https://github.com/Inco-fhevm/lightning-rod
 #
-# Apple Silicon: the images are amd64-only and run under emulation. Make sure Docker Desktop's
-# VM is in a clean state — pick a VMM (QEMU or Apple Virtualization framework) and fully
-# Apply & Restart after any change. With a consistent VM, decrypt works fine.
+# The rc-12 images are multi-arch (amd64 + arm64), so they run natively everywhere —
+# including Apple Silicon — with no `platform:` override and no emulation.
 
 services:
   # Anvil node
   anvil:
-    platform: linux/amd64 # mac compatibility
-    image: inconetwork/local-node-anvil-mainnet:v1.0.0-rc-11
+    image: inconetwork/local-node-anvil-mainnet:v1.0.0-rc-12
     ports:
       - "8545:8545"
 
   # Covalidator service that waits for deployer to be healthy
   covalidator:
-    platform: linux/amd64 # mac compatibility
-    image: inconetwork/local-node-covalidator-mainnet:v1.0.0-rc-11
+    image: inconetwork/local-node-covalidator-mainnet:v1.0.0-rc-12
     depends_on:
       anvil:
         condition: service_healthy
