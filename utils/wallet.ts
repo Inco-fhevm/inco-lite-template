@@ -7,8 +7,9 @@ import { HexString } from "@inco/js";
 dotenv.config();
 
 // Tests run under Bun (ESM), not the Hardhat runtime, so select the network from an env var.
-// Set NETWORK=baseSepolia to target Base Sepolia; defaults to the local anvil node.
-const networkName = process.env.NETWORK || "anvil";
+// Default target is Base Sepolia (hosted covalidator, no local docker needed).
+// Set NETWORK=anvil (e.g. `bun run test:local`) to target the local anvil + covalidator node.
+const networkName = process.env.NETWORK || "baseSepolia";
 const USE_ANVIL = networkName === "anvil";
 console.log(`Detected network: ${networkName}`);
 

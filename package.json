@@ -4,7 +4,8 @@
 		"compile": "hardhat compile",
 		"node:up": "docker compose up -d",
 		"node:down": "docker compose down",
-		"test": "bun test --timeout 300000"
+		"test": "bun test --timeout 300000",
+		"test:local": "NETWORK=anvil bun test --timeout 300000"
 	},
 	"devDependencies": {
 		"@inco/js": "1.0.0-rc-8",

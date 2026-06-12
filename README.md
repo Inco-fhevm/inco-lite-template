@@ -51,27 +51,31 @@ pnpm hardhat compile
 
 ### **5. Run Tests**
 
-The e2e tests run under **Bun** (ESM), which loads `@inco/js`'s ESM build. Compile first so the
-artifacts exist, then run:
+The e2e tests run under **Bun** (ESM, loads `@inco/js`'s ESM build). Compile first, then run.
+
+**Base Sepolia (default — hosted covalidator, no docker):** needs a funded `PRIVATE_KEY_BASE_SEPOLIA`.
 
 ```sh
-pnpm hardhat compile     # build artifacts
-bun run test             # encrypt -> contract -> attestedDecrypt e2e (uses --timeout 300000)
+pnpm hardhat compile
+bun run test             # → Base Sepolia
 ```
 
-> Use `bun run test` (not bare `bun test`) — the script sets a long timeout for the covalidator
-> round-trips; the default 5s will time out.
+**Local node (anvil + covalidator):** start the docker node, then run with the local flag.
+
+```sh
+docker compose up -d
+pnpm hardhat compile
+bun run test:local       # → local anvil (NETWORK=anvil)
+```
+
+> Use `bun run test` / `bun run test:local` (not bare `bun test`) — the scripts set a long
+> timeout for the covalidator round-trips; the default 5s will time out. Decrypt waits adaptively
+> (retries until the covalidator processes the handle), so it's instant locally and patient on
+> Base Sepolia.
 >
-> **Apple Silicon note:** the local-node images are amd64-only and run under emulation. Make sure
-> Docker Desktop's VM is in a clean state — pick a VMM (QEMU or Apple Virtualization framework)
-> and fully **Apply & Restart** after any change. With a consistent VM, decrypt works.
-
-To target Base Sepolia instead of the local node, set `NETWORK=baseSepolia` (with a funded
-`PRIVATE_KEY_BASE_SEPOLIA`):
-
-```sh
-NETWORK=baseSepolia bun run test
-```
+> **Apple Silicon note (local only):** the local-node images are amd64-only and run under
+> emulation. Keep Docker Desktop's VM in a clean state — pick a VMM (QEMU or Apple Virtualization
+> framework) and fully **Apply & Restart** after any change.
 
 ## **Features**
 - End-to-end testing of encryption, reencryption  and decryption functionalities.
