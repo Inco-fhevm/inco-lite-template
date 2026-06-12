@@ -56,29 +56,21 @@ artifacts exist, then run:
 
 ```sh
 pnpm hardhat compile     # build artifacts
-bun test                 # encrypt -> contract -> attestedDecrypt e2e
+bun run test             # encrypt -> contract -> attestedDecrypt e2e (uses --timeout 300000)
 ```
 
-> **Apple Silicon (M-series) note.** The published `inconetwork/local-node-covalidator-*`
-> images are **amd64-only**, and their post-quantum (X-Wing / ML-KEM) crypto computes
-> incorrectly under amd64 emulation on arm64 — so `attestedDecrypt` fails with `invalid tag`.
-> Build a **native arm64** covalidator once (requires `gh` access to the inco-monorepo),
-> then point the `covalidator` service in `docker-compose.yaml` at it:
+> Use `bun run test` (not bare `bun test`) — the script sets a long timeout for the covalidator
+> round-trips; the default 5s will time out.
 >
-> ```sh
-> ./scripts/build-local-covalidator.sh        # builds inco-covalidator-mainnet:arm64
-> # then in docker-compose.yaml set:  image: inco-covalidator-mainnet:arm64
-> # and remove that service's `platform: linux/amd64` line
-> ```
->
-> On native amd64 (Linux / CI / Intel Mac) you don't need this — the default published
-> `inconetwork/local-node-covalidator-mainnet` image works as-is.
+> **Apple Silicon note:** the local-node images are amd64-only and run under emulation. Make sure
+> Docker Desktop's VM is in a clean state — pick a VMM (QEMU or Apple Virtualization framework)
+> and fully **Apply & Restart** after any change. With a consistent VM, decrypt works.
 
 To target Base Sepolia instead of the local node, set `NETWORK=baseSepolia` (with a funded
 `PRIVATE_KEY_BASE_SEPOLIA`):
 
 ```sh
-NETWORK=baseSepolia bun test
+NETWORK=baseSepolia bun run test
 ```
 
 ## **Features**

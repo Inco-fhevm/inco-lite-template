@@ -1,20 +1,12 @@
 # Inco local node (anvil + covalidator) for the `mainnet` pepper (executor 0x4b9911…8624,
 # matching @inco/lightning/src/Lib.sol). Mirrors https://github.com/Inco-fhevm/lightning-rod
 #
-# Default: the published amd64 images (work on native amd64 — Linux / CI / Intel Mac).
-#
-# ⚠️ Apple Silicon (M-series): the published covalidator is amd64-only, and its post-quantum
-# (X-Wing / ML-KEM) crypto computes incorrectly under amd64 emulation on arm64 → attestedDecrypt
-# fails with "invalid tag" (contract ops still work; only decrypt breaks). To run locally on
-# Apple Silicon, build a NATIVE arm64 covalidator and use it instead of the published image:
-#
-#   ./scripts/build-local-covalidator.sh        # builds inco-covalidator-mainnet:arm64
-#   # then, in the covalidator service below, replace the image with:
-#   #   image: inco-covalidator-mainnet:arm64
-#   # and remove its `platform: linux/amd64` line.
+# Apple Silicon: the images are amd64-only and run under emulation. Make sure Docker Desktop's
+# VM is in a clean state — pick a VMM (QEMU or Apple Virtualization framework) and fully
+# Apply & Restart after any change. With a consistent VM, decrypt works fine.
 
 services:
-  # Anvil node (EVM only — emulation is fine)
+  # Anvil node
   anvil:
     platform: linux/amd64 # mac compatibility
     image: inconetwork/local-node-anvil-mainnet:v1.0.0-rc-8
