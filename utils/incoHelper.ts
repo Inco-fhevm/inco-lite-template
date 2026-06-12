@@ -1,6 +1,6 @@
 import { AttestedComputeSupportedOps, Lightning } from '@inco/js/lite';
 import { handleTypes } from '@inco/js';
-import { publicClient } from './wallet';
+import { publicClient } from './wallet.js';
 import type { WalletClient, Hex } from 'viem';
 import { bytesToHex, pad, toHex } from 'viem';
 
@@ -14,10 +14,17 @@ export async function getConfig() {
   console.log(`Initializing Inco config for chain: ${chainId}`);
 
   if (chainId === 31337) {
-    zap = await Lightning.localNode(); // Local Anvil node
+    // Local Anvil node — `mainnet` pepper (executor 0x4b9911… = the canonical Lib.sol),
+    // matching the local-node-*-mainnet docker images.
+    zap = await Lightning.localNode('mainnet');
   } else if (chainId === 84532) {
-    zap = await Lightning.latest('testnet', 84532); // Base Sepolia
-  } 
+    // Base Sepolia — v1 network factory (no pepper/chainId needed).
+    // Pass our own RPC URL when configured; otherwise the SDK falls back to viem's public endpoint.
+    const rpcUrl = process.env.BASE_SEPOLIA_RPC_URL;
+    zap = await Lightning.baseSepoliaTestnet(
+      rpcUrl ? { hostChainRpcUrls: [rpcUrl] } : undefined
+    );
+  }
   else {
     throw new Error(`Unsupported chain ID: ${chainId}`);
   }

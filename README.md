@@ -50,17 +50,38 @@ pnpm hardhat compile
 ```
 
 ### **5. Run Tests**
+
+The e2e tests run under **Bun** (ESM), which loads `@inco/js`'s ESM build. Compile first so the
+artifacts exist, then run:
+
 ```sh
-pnpm hardhat test --network anvil
+pnpm hardhat compile     # build artifacts
+bun test                 # encrypt -> contract -> attestedDecrypt e2e
 ```
 
-Or, if running against another network, e.g. Base Sepolia, run
+> **Apple Silicon (M-series) note.** The published `inconetwork/local-node-covalidator-*`
+> images are **amd64-only**, and their post-quantum (X-Wing / ML-KEM) crypto computes
+> incorrectly under amd64 emulation on arm64 — so `attestedDecrypt` fails with `invalid tag`.
+> Build a **native arm64** covalidator once (requires `gh` access to the inco-monorepo),
+> then point the `covalidator` service in `docker-compose.yaml` at it:
+>
+> ```sh
+> ./scripts/build-local-covalidator.sh        # builds inco-covalidator-mainnet:arm64
+> # then in docker-compose.yaml set:  image: inco-covalidator-mainnet:arm64
+> # and remove that service's `platform: linux/amd64` line
+> ```
+>
+> On native amd64 (Linux / CI / Intel Mac) you don't need this — the default published
+> `inconetwork/local-node-covalidator-mainnet` image works as-is.
+
+To target Base Sepolia instead of the local node, set `NETWORK=baseSepolia` (with a funded
+`PRIVATE_KEY_BASE_SEPOLIA`):
 
 ```sh
-pnpm hardhat test --network baseSepolia
+NETWORK=baseSepolia bun test
 ```
 
 ## **Features**
 - End-to-end testing of encryption, reencryption  and decryption functionalities.
-- Hardhat-based test framework.
+- Hardhat for contracts; Bun + ESM for the encrypt/decrypt e2e (matching `@inco/js` v1).
 - Supports reencryption and ciphertext validation.

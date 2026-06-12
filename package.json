@@ -1,6 +1,14 @@
 {
+	"type": "module",
+	"scripts": {
+		"compile": "hardhat compile",
+		"node:up": "docker compose up -d",
+		"node:down": "docker compose down",
+		"test": "bun test --timeout 300000"
+	},
 	"devDependencies": {
-		"@inco/js": "^0.7.7",
+		"@inco/js": "1.0.0-rc-8",
+		"@types/bun": "latest",
 		"@nomicfoundation/hardhat-ignition": "^0.15.0",
 		"@nomicfoundation/hardhat-ignition-viem": "^0.15.0",
 		"@nomicfoundation/hardhat-network-helpers": "^1.0.0",
@@ -20,10 +28,18 @@
 		"viem": "^2.43.5"
 	},
 	"dependencies": {
-		"@inco/lightning": "^0.7.7",
+		"@inco/lightning": "1.0.0-rc-8",
 		"@nomicfoundation/hardhat-toolbox": "^5.0.0",
 		"@openzeppelin/contracts": "^5.4.0",
 		"@openzeppelin/contracts-upgradeable": "^5.4.0",
 		"dotenv": "^17.2.3"
-	}
+	},
+	"pnpm": {
+		"overrides": {
+			"forge-std": "git+https://github.com/foundry-rs/forge-std.git#2f05b3001ed9d74b171d17eac80b3765ce186a76",
+			"ds-test": "git+https://github.com/dapphub/ds-test.git#e282159d5170298eb2455a6c05280ab5a73a4ef0",
+			"@safe-global/safe-smart-account": "git+https://github.com/safe-global/safe-smart-account.git#dc437e8fba8b4805d76bcbd1c668c9fd3d1e83be"
+		}
+	},
+	"packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319"
 }

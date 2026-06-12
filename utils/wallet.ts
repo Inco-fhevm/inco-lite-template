@@ -6,9 +6,9 @@ import { HexString } from "@inco/js";
 
 dotenv.config();
 
-// Determine whether to use Anvil (local) or Base Sepolia by reading Hardhat's runtime environment
-import { network } from "hardhat";
-const networkName = network.name;
+// Tests run under Bun (ESM), not the Hardhat runtime, so select the network from an env var.
+// Set NETWORK=baseSepolia to target Base Sepolia; defaults to the local anvil node.
+const networkName = process.env.NETWORK || "anvil";
 const USE_ANVIL = networkName === "anvil";
 console.log(`Detected network: ${networkName}`);
 

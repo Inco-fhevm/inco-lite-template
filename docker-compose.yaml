@@ -1,19 +1,30 @@
-# This file is used to start the Inco local node and covalidator
-# The canonical source of truth is https://github.com/Inco-fhevm/lightning-rod
-# This file is a convenience for local development.
+# Inco local node (anvil + covalidator) for the `mainnet` pepper (executor 0x4b9911…8624,
+# matching @inco/lightning/src/Lib.sol). Mirrors https://github.com/Inco-fhevm/lightning-rod
+#
+# Default: the published amd64 images (work on native amd64 — Linux / CI / Intel Mac).
+#
+# ⚠️ Apple Silicon (M-series): the published covalidator is amd64-only, and its post-quantum
+# (X-Wing / ML-KEM) crypto computes incorrectly under amd64 emulation on arm64 → attestedDecrypt
+# fails with "invalid tag" (contract ops still work; only decrypt breaks). To run locally on
+# Apple Silicon, build a NATIVE arm64 covalidator and use it instead of the published image:
+#
+#   ./scripts/build-local-covalidator.sh        # builds inco-covalidator-mainnet:arm64
+#   # then, in the covalidator service below, replace the image with:
+#   #   image: inco-covalidator-mainnet:arm64
+#   # and remove its `platform: linux/amd64` line.
 
 services:
-  # Anvil node
+  # Anvil node (EVM only — emulation is fine)
   anvil:
     platform: linux/amd64 # mac compatibility
-    image: inconetwork/local-node-anvil:v3-33-gc708d2f # Match https://github.com/Inco-fhevm/lightning-rod/blob/main/.env
+    image: inconetwork/local-node-anvil-mainnet:v1.0.0-rc-8
     ports:
       - "8545:8545"
 
   # Covalidator service that waits for deployer to be healthy
   covalidator:
     platform: linux/amd64 # mac compatibility
-    image: inconetwork/local-node-covalidator:v3-33-gc708d2f # Match https://github.com/Inco-fhevm/lightning-rod/blob/main/.env
+    image: inconetwork/local-node-covalidator-mainnet:v1.0.0-rc-8
     depends_on:
       anvil:
         condition: service_healthy
