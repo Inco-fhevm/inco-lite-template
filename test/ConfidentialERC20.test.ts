@@ -1,19 +1,68 @@
-import { expect } from "chai";
-import { HexString } from "@inco/js";
-import {
-  Address,
-  parseEther,
-  formatEther,
-  getAddress
-} from "viem";
+import { describe, it, beforeEach, afterAll, expect } from "bun:test";
+import { HexString } from "@inco/lightning-js";
+import { Address, parseEther, formatEther, getAddress } from "viem";
 import confidentialERC20Abi from "../artifacts/contracts/ConfidentialERC20.sol/ConfidentialERC20.json";
 import { encryptValue, decryptValue, getFee } from "../utils/incoHelper";
 import { namedWallets, wallet, publicClient } from "../utils/wallet";
 
-describe("ConfidentialERC20 Tests", function () {
+// Give the covalidator time to process operations before decrypting.
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const COVALIDATOR_DELAY = 3000;
+
+// Per-wallet funding target (ETH). Default 0.01 keeps existing testnet/local behavior;
+// override with FUND_TARGET_ETH for cost-sensitive networks (e.g. Base mainnet, where
+// gas (~0.007 gwei) + the Inco per-op fee (0.000001 ETH) make a much smaller float ample).
+const FUND_TARGET_ETH = Number(process.env.FUND_TARGET_ETH ?? "0.01");
+
+describe("ConfidentialERC20 Tests", () => {
   let contractAddress: Address;
 
-  beforeEach(async function () {
+  // Log every wallet's ETH balance at the end. On mainnet, also sweep each (ephemeral) named
+  // wallet's leftover ETH back to the owner so a run consumes as little real ETH as possible.
+  afterAll(async () => {
+    console.log("\n========== Final ETH balances ==========");
+    const ownerAddr = wallet.account.address;
+    const ownerBefore = await publicClient.getBalance({ address: ownerAddr });
+    console.log(`owner ${ownerAddr}: ${formatEther(ownerBefore)} ETH`);
+
+    const isMainnet = publicClient.chain.id === 8453;
+    const RESERVE = parseEther("0.000004"); // covers the sweep tx's own gas + Base L1 data fee
+
+    for (const [name, w] of Object.entries(namedWallets)) {
+      const addr = w.account?.address as Address;
+      const bal = await publicClient.getBalance({ address: addr });
+      if (isMainnet && bal > RESERVE) {
+        try {
+          const tx = await w.sendTransaction({
+            to: ownerAddr,
+            value: bal - RESERVE,
+            account: w.account!,
+            chain: w.chain,
+          });
+          await publicClient.waitForTransactionReceipt({ hash: tx });
+          console.log(
+            `${name.padEnd(6)} ${addr}: ${formatEther(bal)} ETH -> swept ${formatEther(bal - RESERVE)} back to owner`
+          );
+          continue;
+        } catch (error: any) {
+          console.log(
+            `${name.padEnd(6)} ${addr}: ${formatEther(bal)} ETH (sweep failed: ${error.shortMessage || error.message})`
+          );
+          continue;
+        }
+      }
+      console.log(`${name.padEnd(6)} ${addr}: ${formatEther(bal)} ETH`);
+    }
+
+    if (isMainnet) {
+      const ownerAfter = await publicClient.getBalance({ address: ownerAddr });
+      console.log(`owner  ${ownerAddr}: ${formatEther(ownerAfter)} ETH (after sweeps)`);
+      console.log(`run consumed (owner net): ${formatEther(ownerBefore - ownerAfter)} ETH this afterAll`);
+    }
+    console.log("========================================");
+  });
+
+  beforeEach(async () => {
     console.log("\nSetting up ConfidentialERC20 test environment");
 
     // Deploy the contract
@@ -36,8 +85,8 @@ describe("ConfidentialERC20 Tests", function () {
       });
       const balanceEth = Number(formatEther(balance));
 
-      if (balanceEth < 0.01) {
-        const neededEth = 0.01 - balanceEth;
+      if (balanceEth < FUND_TARGET_ETH) {
+        const neededEth = FUND_TARGET_ETH - balanceEth;
         console.log(`Funding ${name} with ${neededEth.toFixed(6)} ETH...`);
         const tx = await wallet.sendTransaction({
           to: userWallet.account?.address as Address,
@@ -50,8 +99,8 @@ describe("ConfidentialERC20 Tests", function () {
     }
   });
 
-  describe("----------- Minting Tests -----------", function () {
-    it("Should mint tokens using plain mint() by owner", async function () {
+  describe("----------- Minting Tests -----------", () => {
+    it("Should mint tokens using plain mint() by owner", async () => {
       console.log("\nMinting 5000 cUSD to Owner");
       const plainTextAmount = parseEther("5000");
 
@@ -75,7 +124,7 @@ describe("ConfidentialERC20 Tests", function () {
       })) as HexString;
 
       // Wait for co-validator
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await sleep(COVALIDATOR_DELAY);
 
       // Decrypt balance
       const decryptedBalance = await decryptValue({
@@ -84,10 +133,10 @@ describe("ConfidentialERC20 Tests", function () {
       });
 
       console.log(`Decrypted Owner Balance: ${formatEther(decryptedBalance)} cUSD`);
-      expect(decryptedBalance).to.equal(plainTextAmount);
+      expect(decryptedBalance).toBe(plainTextAmount);
     });
 
-    it("Should mint tokens using encryptedMint()", async function () {
+    it("Should mint tokens using encryptedMint()", async () => {
       console.log("\nEncrypted Minting 3000 cUSD to Alice");
       const plainTextAmount = parseEther("3000");
 
@@ -97,7 +146,6 @@ describe("ConfidentialERC20 Tests", function () {
         address: namedWallets.alice.account?.address as Address,
         contractAddress,
       });
-
 
       // Get fee amount
       const fee = await getFee();
@@ -113,11 +161,11 @@ describe("ConfidentialERC20 Tests", function () {
         chain: namedWallets.alice.chain,
       });
 
-      await publicClient.waitForTransactionReceipt({ hash: txHash, confirmations: 5 });
+      await publicClient.waitForTransactionReceipt({ hash: txHash });
       console.log("Encrypted mint successful");
 
       // Wait for co-validator
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await sleep(COVALIDATOR_DELAY);
 
       // Fetch Alice's balance
       const eBalanceHandle = (await publicClient.readContract({
@@ -135,10 +183,10 @@ describe("ConfidentialERC20 Tests", function () {
       });
 
       console.log(`Decrypted Alice Balance: ${formatEther(decryptedBalance)} cUSD`);
-      expect(decryptedBalance).to.equal(plainTextAmount);
+      expect(decryptedBalance).toBe(plainTextAmount);
     });
 
-    it("Should revert encryptedMint() if insufficient fee provided", async function () {
+    it("Should revert encryptedMint() if insufficient fee provided", async () => {
       console.log("\nTesting Insufficient Fee for Encrypted Mint");
       const plainTextAmount = parseEther("1000");
 
@@ -159,16 +207,16 @@ describe("ConfidentialERC20 Tests", function () {
           chain: namedWallets.alice.chain,
         });
         await publicClient.waitForTransactionReceipt({ hash: txHash });
-        expect.fail("Should have reverted with InsufficientFees");
+        throw new Error("Should have reverted with InsufficientFees");
       } catch (error: any) {
         console.log("Transaction reverted as expected");
-        expect(error.message).to.include("InsufficientFees");
+        expect(error.message).toContain("InsufficientFees");
       }
     });
   });
 
-  describe("------- Transfer Tests -------", function () {
-    beforeEach(async function () {
+  describe("------- Transfer Tests -------", () => {
+    beforeEach(async () => {
       // Mint 5000 cUSD to owner for transfer tests
       const txHash = await wallet.writeContract({
         address: contractAddress,
@@ -177,10 +225,10 @@ describe("ConfidentialERC20 Tests", function () {
         args: [parseEther("5000")],
       });
       await publicClient.waitForTransactionReceipt({ hash: txHash });
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await sleep(COVALIDATOR_DELAY);
     });
 
-    it("Should transfer tokens from owner to Bob", async function () {
+    it("Should transfer tokens from owner to Bob", async () => {
       console.log("\nTransferring 1000 cUSD from Owner to Bob");
       const transferAmount = parseEther("1000");
 
@@ -205,17 +253,14 @@ describe("ConfidentialERC20 Tests", function () {
         address: contractAddress,
         abi: transferAbi,
         functionName: "transfer",
-        args: [
-          namedWallets.bob.account?.address as Address,
-          encryptedAmount,
-        ],
+        args: [namedWallets.bob.account?.address as Address, encryptedAmount],
         value: fee,
       });
 
       await publicClient.waitForTransactionReceipt({ hash: txHash });
       console.log("Transfer successful");
 
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await sleep(COVALIDATOR_DELAY);
 
       // Verify owner's new balance (should be 4000)
       const ownerNewBalanceHandle = (await publicClient.readContract({
@@ -246,13 +291,13 @@ describe("ConfidentialERC20 Tests", function () {
       });
 
       console.log(`Bob Balance After Transfer: ${formatEther(bobBalance)} cUSD`);
-      expect(ownerBalance).to.equal(parseEther("4000"));
-      expect(bobBalance).to.equal(parseEther("1000"));
+      expect(ownerBalance).toBe(parseEther("4000"));
+      expect(bobBalance).toBe(parseEther("1000"));
     });
   });
 
-  describe("------- Approval and Allowance Tests -------", function () {
-    beforeEach(async function () {
+  describe("------- Approval and Allowance Tests -------", () => {
+    beforeEach(async () => {
       // Mint 5000 cUSD to owner for approval tests
       const txHash = await wallet.writeContract({
         address: contractAddress,
@@ -261,10 +306,10 @@ describe("ConfidentialERC20 Tests", function () {
         args: [parseEther("5000")],
       });
       await publicClient.waitForTransactionReceipt({ hash: txHash });
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await sleep(COVALIDATOR_DELAY);
     });
 
-    it("Should approve spending allowance", async function () {
+    it("Should approve spending allowance", async () => {
       console.log("\nApproving Bob to spend 2000 cUSD");
       const approvalAmount = parseEther("2000");
 
@@ -296,7 +341,7 @@ describe("ConfidentialERC20 Tests", function () {
       await publicClient.waitForTransactionReceipt({ hash: txHash });
       console.log("Approval successful");
 
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await sleep(COVALIDATOR_DELAY);
 
       const allowanceHandle = (await publicClient.readContract({
         address: getAddress(contractAddress),
@@ -311,12 +356,12 @@ describe("ConfidentialERC20 Tests", function () {
       });
 
       console.log(`Bob's Allowance: ${formatEther(allowanceValue)} cUSD`);
-      expect(allowanceValue).to.equal(approvalAmount);
+      expect(allowanceValue).toBe(approvalAmount);
     });
   });
 
-  describe("------- TransferFrom Tests -------", function () {
-    beforeEach(async function () {
+  describe("------- TransferFrom Tests -------", () => {
+    beforeEach(async () => {
       // Mint 5000 cUSD to owner
       const mintTx = await wallet.writeContract({
         address: contractAddress,
@@ -325,7 +370,7 @@ describe("ConfidentialERC20 Tests", function () {
         args: [parseEther("5000")],
       });
       await publicClient.waitForTransactionReceipt({ hash: mintTx });
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await sleep(COVALIDATOR_DELAY);
 
       // Approve Bob to spend 3000 cUSD
       const approvalAmount = parseEther("3000");
@@ -355,11 +400,11 @@ describe("ConfidentialERC20 Tests", function () {
       });
 
       await publicClient.waitForTransactionReceipt({ hash: approveTx });
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await sleep(COVALIDATOR_DELAY);
       console.log("Bob approved to spend 3000 cUSD from owner");
     });
 
-    it("Should transferFrom owner to Alice using Bob's allowance", async function () {
+    it("Should transferFrom owner to Alice using Bob's allowance", async () => {
       console.log("\nBob transferring 1500 cUSD from Owner to Alice");
       const transferAmount = parseEther("1500");
 
@@ -369,7 +414,7 @@ describe("ConfidentialERC20 Tests", function () {
         contractAddress,
       });
 
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await sleep(COVALIDATOR_DELAY);
 
       const fee = await getFee();
 
@@ -399,7 +444,7 @@ describe("ConfidentialERC20 Tests", function () {
       await publicClient.waitForTransactionReceipt({ hash: txHash });
       console.log("TransferFrom successful");
 
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await sleep(COVALIDATOR_DELAY);
 
       // Verify owner's new balance (should be 3500)
       const ownerNewBalanceHandle = (await publicClient.readContract({
@@ -415,7 +460,7 @@ describe("ConfidentialERC20 Tests", function () {
       });
 
       console.log(`Owner Balance: ${formatEther(ownerBalance)} cUSD`);
-      expect(ownerBalance).to.equal(parseEther("3500"));
+      expect(ownerBalance).toBe(parseEther("3500"));
 
       // Verify Dave's new balance (should be 1500)
       const daveBalanceHandle = (await publicClient.readContract({
@@ -431,7 +476,7 @@ describe("ConfidentialERC20 Tests", function () {
       });
 
       console.log(`Dave Balance: ${formatEther(daveBalance)} cUSD`);
-      expect(daveBalance).to.equal(parseEther("1500"));
+      expect(daveBalance).toBe(parseEther("1500"));
 
       // Verify Bob's remaining allowance (should be 1500)
       const remainingAllowanceHandle = (await publicClient.readContract({
@@ -447,10 +492,10 @@ describe("ConfidentialERC20 Tests", function () {
       });
 
       console.log(`Bob's Remaining Allowance: ${formatEther(remainingAllowance)} cUSD`);
-      expect(remainingAllowance).to.equal(parseEther("1500"));
+      expect(remainingAllowance).toBe(parseEther("1500"));
     });
 
-    it("Should revert transferFrom with insufficient allowance", async function () {
+    it("Should revert transferFrom with insufficient allowance", async () => {
       console.log("\nTesting TransferFrom with Insufficient Allowance");
       const transferAmount = parseEther("5000");
 
@@ -460,7 +505,7 @@ describe("ConfidentialERC20 Tests", function () {
         contractAddress,
       });
 
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await sleep(COVALIDATOR_DELAY);
 
       const fee = await getFee();
 
@@ -488,10 +533,10 @@ describe("ConfidentialERC20 Tests", function () {
           chain: namedWallets.bob.chain,
         });
         await publicClient.waitForTransactionReceipt({ hash: txHash });
-        expect.fail("Should have reverted with InsufficientAllowance");
+        throw new Error("Should have reverted with InsufficientAllowance");
       } catch (error: any) {
         console.log("Transaction reverted as expected");
-        expect(error.message).to.include("InsufficientAllowance");
+        expect(error.message).toContain("InsufficientAllowance");
       }
     });
   });
