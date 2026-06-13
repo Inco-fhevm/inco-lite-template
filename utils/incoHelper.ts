@@ -24,6 +24,13 @@ export async function getConfig() {
     zap = await Lightning.baseSepoliaTestnet(
       rpcUrl ? { hostChainRpcUrls: [rpcUrl] } : undefined
     );
+  } else if (chainId === 8453) {
+    // Base mainnet (REAL ETH) — v1 network factory bound to the latest mainnet deployment.
+    // Pass our own RPC URL when configured; otherwise the SDK falls back to viem's public endpoint.
+    const rpcUrl = process.env.BASE_MAINNET_RPC_URL;
+    zap = await Lightning.baseMainnet(
+      rpcUrl ? { hostChainRpcUrls: [rpcUrl] } : undefined
+    );
   }
   else {
     throw new Error(`Unsupported chain ID: ${chainId}`);

@@ -1,4 +1,4 @@
-import { describe, it, beforeEach, expect } from "bun:test";
+import { describe, it, beforeEach, afterAll, expect } from "bun:test";
 import { HexString } from "@inco/lightning-js";
 import { Address, parseEther, formatEther, getAddress } from "viem";
 import confidentialERC20Abi from "../artifacts/contracts/ConfidentialERC20.sol/ConfidentialERC20.json";
@@ -9,8 +9,58 @@ import { namedWallets, wallet, publicClient } from "../utils/wallet";
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const COVALIDATOR_DELAY = 3000;
 
+// Per-wallet funding target (ETH). Default 0.01 keeps existing testnet/local behavior;
+// override with FUND_TARGET_ETH for cost-sensitive networks (e.g. Base mainnet, where
+// gas (~0.007 gwei) + the Inco per-op fee (0.000001 ETH) make a much smaller float ample).
+const FUND_TARGET_ETH = Number(process.env.FUND_TARGET_ETH ?? "0.01");
+
 describe("ConfidentialERC20 Tests", () => {
   let contractAddress: Address;
+
+  // Log every wallet's ETH balance at the end. On mainnet, also sweep each (ephemeral) named
+  // wallet's leftover ETH back to the owner so a run consumes as little real ETH as possible.
+  afterAll(async () => {
+    console.log("\n========== Final ETH balances ==========");
+    const ownerAddr = wallet.account.address;
+    const ownerBefore = await publicClient.getBalance({ address: ownerAddr });
+    console.log(`owner ${ownerAddr}: ${formatEther(ownerBefore)} ETH`);
+
+    const isMainnet = publicClient.chain.id === 8453;
+    const RESERVE = parseEther("0.000004"); // covers the sweep tx's own gas + Base L1 data fee
+
+    for (const [name, w] of Object.entries(namedWallets)) {
+      const addr = w.account?.address as Address;
+      const bal = await publicClient.getBalance({ address: addr });
+      if (isMainnet && bal > RESERVE) {
+        try {
+          const tx = await w.sendTransaction({
+            to: ownerAddr,
+            value: bal - RESERVE,
+            account: w.account!,
+            chain: w.chain,
+          });
+          await publicClient.waitForTransactionReceipt({ hash: tx });
+          console.log(
+            `${name.padEnd(6)} ${addr}: ${formatEther(bal)} ETH -> swept ${formatEther(bal - RESERVE)} back to owner`
+          );
+          continue;
+        } catch (error: any) {
+          console.log(
+            `${name.padEnd(6)} ${addr}: ${formatEther(bal)} ETH (sweep failed: ${error.shortMessage || error.message})`
+          );
+          continue;
+        }
+      }
+      console.log(`${name.padEnd(6)} ${addr}: ${formatEther(bal)} ETH`);
+    }
+
+    if (isMainnet) {
+      const ownerAfter = await publicClient.getBalance({ address: ownerAddr });
+      console.log(`owner  ${ownerAddr}: ${formatEther(ownerAfter)} ETH (after sweeps)`);
+      console.log(`run consumed (owner net): ${formatEther(ownerBefore - ownerAfter)} ETH this afterAll`);
+    }
+    console.log("========================================");
+  });
 
   beforeEach(async () => {
     console.log("\nSetting up ConfidentialERC20 test environment");
@@ -35,8 +85,8 @@ describe("ConfidentialERC20 Tests", () => {
       });
       const balanceEth = Number(formatEther(balance));
 
-      if (balanceEth < 0.01) {
-        const neededEth = 0.01 - balanceEth;
+      if (balanceEth < FUND_TARGET_ETH) {
+        const neededEth = FUND_TARGET_ETH - balanceEth;
         console.log(`Funding ${name} with ${neededEth.toFixed(6)} ETH...`);
         const tx = await wallet.sendTransaction({
           to: userWallet.account?.address as Address,

@@ -5,7 +5,9 @@ require("dotenv").config();
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY_BASE_SEPOLIA || "";
 const PRIVATE_KEY_ANVIL = process.env.PRIVATE_KEY_ANVIL || "";
+const PRIVATE_KEY_MAINNET = process.env.PRIVATE_KEY_BASE_MAINNET || "";
 const BASE_SEPOLIA_RPC_URL = process.env.BASE_SEPOLIA_RPC_URL || "";
+const BASE_MAINNET_RPC_URL = process.env.BASE_MAINNET_RPC_URL || "https://base-rpc.publicnode.com";
 
 /** @type {import('hardhat/config').HardhatUserConfig} */
 module.exports = {
@@ -27,6 +29,12 @@ module.exports = {
     baseSepolia: {
       url: BASE_SEPOLIA_RPC_URL,
       accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
+    },
+    // Base mainnet (chain 8453) — SPENDS REAL ETH
+    baseMainnet: {
+      url: BASE_MAINNET_RPC_URL,
+      accounts: PRIVATE_KEY_MAINNET ? [PRIVATE_KEY_MAINNET] : [],
+      chainId: 8453,
     },
   },
 };

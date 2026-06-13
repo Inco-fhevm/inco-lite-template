@@ -1,19 +1,16 @@
 # Inco local node (anvil + covalidator) for the `mainnet` pepper (executor 0x4b9911…8624,
 # matching @inco/lightning/src/Lib.sol). Mirrors https://github.com/Inco-fhevm/lightning-rod
-#
-# The rc-13 images are multi-arch (amd64 + arm64), so they run natively everywhere —
-# including Apple Silicon — with no `platform:` override and no emulation.
 
 services:
   # Anvil node
   anvil:
-    image: inconetwork/local-node-anvil-mainnet:v1.0.0-rc-13
+    image: inconetwork/local-node-anvil-mainnet:v1.0.0
     ports:
       - "8545:8545"
 
   # Covalidator service that waits for deployer to be healthy
   covalidator:
-    image: inconetwork/local-node-covalidator-mainnet:v1.0.0-rc-13
+    image: inconetwork/local-node-covalidator-mainnet:v1.0.0
     depends_on:
       anvil:
         condition: service_healthy
